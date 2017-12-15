@@ -99,6 +99,12 @@ class DefaultController extends Controller
     {
         $user = $this->getUser();
         $family = $user->getFamilies();
+
+        $nbNotif = $this->forward('NotifBundle:Default:countNotif', array(
+            'user_id'  => $user->getId(),
+        ))->getContent();
+
+
         $repositoryExpense    = $this->getDoctrine()->getManager()->getRepository('AccountingBundle:Expense');
         $repositoryEvent    = $this->getDoctrine()->getManager()->getRepository('EventBundle:Event');
         $event = $repositoryEvent->findOneBy(array('id' => $event));
@@ -141,7 +147,7 @@ class DefaultController extends Controller
 
     $repartition = json_decode($this->expensesRepartitionAction(1));
 
-        return $this->render('AccountingBundle:Default:Account.html.twig', array("brother_families" => $brother_families,'expenses' => $expenses, "user" => $this->getUser(),'family_members'=>$family_members, 'expense_table' => $expense_table, 'family_members_admin' => $members_accounting));
+        return $this->render('AccountingBundle:Default:Account.html.twig', array("nbNotif" => $nbNotif,"brother_families" => $brother_families,'expenses' => $expenses, "user" => $this->getUser(),'family_members'=>$family_members, 'expense_table' => $expense_table, 'family_members_admin' => $members_accounting));
     }
 
 

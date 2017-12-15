@@ -41,13 +41,39 @@
                 <b-nav-item href="{{ path('expensesList', {event : 1}) }}">Comptes</b-nav-item>
                 </b-nav>
                 <b-nav is-nav-bar class="ml-auto">
+
+                <b-nav-item-dropdown right  >
+                    <template  slot="button-content">
+                    <em>
+                    <span @click="readNotif">
+                        <span v-if="nbNotif > 0">
+                            <i class="fa fa-envelope-open" aria-hidden="true"></i>
+                                <b-badge variant="danger">
+                                ${ nbNotif }
+                                </b-badge>
+                            </em>
+                        </span>
+                        <span v-if="nbNotif == 0">
+                            <i class="fa fa-envelope" aria-hidden="true"></i>
+                        </span>
+                    </span>
+                    </template>
+                    <span v-for="notification in notifications">
+                    <b-dropdown-item href="{{ path('myProfile') }}">${ notification.origin }</b-dropdown-item>
+                    </span>
+                    
+                </b-nav-item-dropdown>
+
                 
+
+
                 <b-nav-item-dropdown right>
                     <template slot="button-content">
                     <em>Mon compte </em>
                     </template>
                     <b-dropdown-item href="{{ path('myProfile') }}">Voir mon profil</b-dropdown-item>
                     <b-dropdown-item href="{{ path('fos_user_security_logout')}}">Se déconnecter</b-dropdown-item>
+                    
                 </b-nav-item-dropdown>
                 
                 
@@ -75,6 +101,42 @@
    el: '#navigation',
    data: {
        families_brother : [{% for family in brother_families %}{% if family %}{ url: "{{path('wishListByEmail', {email: family.admin.email, event: 1})}}", name: "{{family.name}}"}{% if loop.last == false %},{% endif %}{% endif %}{% endfor %}],
+       nbNotif: {{ nbNotif }},
+       notifications: [
+    
+       ],
+
+   },
+
+   methods: {
+       readNotif: function () {
+       $.ajax({
+         type: "POST",
+         url: "{{ path('readNotif')}}",
+         data: {},
+         cache: false,
+         success: function(result){
+             if(this.nbNotif > 0){
+             result.forEach(function(element){
+                navigation.notifications = [];
+                navigation.notifications.push(
+                {
+                    id: element.id,
+                    origin: element.origin,
+                    date: element.date.date,
+                    entity: element.entity,
+                }
+                );
+             });
+           
+           this.nbNotif = 0;
+           }
+         }.bind(this),
+         error : function(resultat, statut, erreur){
+          toastr.error("Oups, une erreur s'est produite 😩");
+        }
+     });
+   },
    }
     });
     </script>

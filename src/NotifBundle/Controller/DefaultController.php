@@ -20,11 +20,7 @@ class DefaultController extends Controller
      * @Route("/notif/send/{user_id}/{entity_type}/{entity_id}", name="sendNotif")
      */
 
-    // Créer une entity type of notif : Mail/push, new expenses/new comment/new accepted invit/
-     // Créer entity authorization notif => user, type of notif, boolean authorise or not
-     // Call this function for every type
-     // Configure messages
-     // 
+    
     public function SendNotifAction($user_id, $entity_type, $entity_id)
     {
         $repository    = $this->getDoctrine()->getManager()->getRepository('UserBundle:User');
@@ -114,5 +110,52 @@ class DefaultController extends Controller
         }else{
             return new Response("Erreur", 400);
         }
+     }
+
+     /**
+     * @Route("/notif/count/{user_id}", name="countNotif")
+     */
+    public function countNotifAction($user_id)
+    {
+        $repository    = $this->getDoctrine()->getManager()->getRepository('NotifBundle:Notification');
+        $notifications = $repository->findBy(array('owner' => $user_id, 'isSaw' => false));
+
+        return new Response(count($notifications), 200);
+    }
+
+    /**
+     * @Route("/notif/read/", name="readNotif")
+     */
+     public function readNotifAction(Request $request)
+     {
+        $user = $this->getUser();
+        if($request->isXMLHttpRequest()){
+            $repository    = $this->getDoctrine()->getManager()->getRepository('NotifBundle:Notification');
+            $notifications = $repository->findBy(array('owner' => $user->getId(), 'isSaw' => false));
+
+
+            $arrayCollection = [];
+            foreach ($notifications as $value) {
+                $value->setIsSaw(true);
+                $em = $this->getDoctrine()->getManager();
+                $em->remove($value);
+                $em->flush();
+                $arrayCollection[] = array(
+                    'id' => $value->getId(),
+                    'date' => $value->getDate(),
+                    'origin' => $value->getOrigin(),  
+                    'entity' =>$value->getLinkedEntity(),
+                );
+            }
+
+            return new JsonResponse($arrayCollection);
+            
+        }
+        else{
+            return new Response("Erreur", 400);
+        }
+         
+       
+         
      }
 }

@@ -24,6 +24,9 @@ class DefaultController extends Controller
         $brother_families = $this->getAllChildFamily();
         $invitation_pending = [];
         $authorizations = $user->getAuthorizations();
+        $nbNotif = $this->forward('NotifBundle:Default:countNotif', array(
+            'user_id'  => $user->getId(),
+        ))->getContent();
 
         foreach ($families as $family) {
             $repository   = $this->getDoctrine()->getManager()->getRepository('InvitationBundle:Invit');
@@ -37,10 +40,27 @@ class DefaultController extends Controller
             $em->flush();
             
             $request->getSession()->getFlashBag()->add('notice', 'Photo bien enregistrée.');
-            return $this->render('UserBundle:Default:profile.html.twig', array('authorizations'=>$authorizations,'invitation_pending' => $invitation_pending,"brother_families" => $brother_families ,"user" => $this->getUser(), 'families'=> $families, 'form'=>$form->createView()));
+            return $this->render('UserBundle:Default:profile.html.twig', array(
+                'authorizations'=>$authorizations,
+                'invitation_pending' => $invitation_pending,
+                "brother_families" => $brother_families ,
+                "user" => $this->getUser(), 
+                'families'=> $families, 
+                'form'=>$form->createView(),
+                'nbNotif' => $$nbNotif,
+            ));
             
         }
-        return $this->render('UserBundle:Default:profile.html.twig', array('authorizations'=>$authorizations,'invitation_pending' => $invitation_pending,"brother_families" => $brother_families ,"user" => $this->getUser(), 'families'=> $families, 'form'=>$form->createView()));
+        return $this->render('UserBundle:Default:profile.html.twig', array(
+            'authorizations'=>$authorizations,
+        'invitation_pending' => $invitation_pending,
+        "brother_families" => $brother_families ,
+        "user" => $this->getUser(),
+         'families'=> $families, 
+         'form'=>$form->createView(),
+         'nbNotif' => $$nbNotif,
+         
+        ));
         
     }
 
@@ -53,6 +73,9 @@ class DefaultController extends Controller
         $repositoryEvent    = $this->getDoctrine()->getManager()->getRepository('EventBundle:Event');
         $owner = $repository->findOneBy(array('email' => $email));
         $families = $owner->getFamilies();
+        $nbNotif = $this->forward('NotifBundle:Default:countNotif', array(
+            'user_id'  => $user->getId(),
+        ))->getContent();
         $events = [];
         $shortLink = [];
         $isEventVisible = [];
@@ -88,11 +111,23 @@ class DefaultController extends Controller
 
         
         if($isSameFamily == true){
-            return $this->render('UserBundle:Default:viewProfile.html.twig', array('shortLink' => $shortLink,'isEventVisible' => $isEventVisible, "brother_families" => $brother_families, 'events' => $events, "user" => $owner,'family_members'=>$family_members, 'families'=> $families));
+            return $this->render('UserBundle:Default:viewProfile.html.twig', array(
+                'shortLink' => $shortLink,
+                'isEventVisible' => $isEventVisible,
+                "brother_families" => $brother_families,
+                'events' => $events, "user" => $owner,
+                'family_members'=>$family_members,
+                'families'=> $families,
+                'nbNotif' => $nbNotif,
+            ));
             
         }
         else{
-            return $this->render('error.html.twig', array('error' =>"Oups, vous n'avez pas l'autorisation d'être ici", 'brother_families' => $brother_families));            
+            return $this->render('error.html.twig', array(
+                'error' =>"Oups, vous n'avez pas l'autorisation d'être ici", 
+                'brother_families' => $brother_families,
+                'nbNotif' => $nbNotif
+            ));            
             
         }
          

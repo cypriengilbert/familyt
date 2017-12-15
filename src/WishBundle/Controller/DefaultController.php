@@ -31,6 +31,9 @@ class DefaultController extends Controller
         $wishes_family = [];
         $isHiddenCouple = false;
         $isHiddenFamily = false;
+        $nbNotif = $this->forward('NotifBundle:Default:countNotif', array(
+            'user_id'  => $user->getId(),
+        ))->getContent();
 
         foreach ($families as $family) {
             if($family->getMother() and $family->getMother() == $user){
@@ -115,7 +118,18 @@ class DefaultController extends Controller
         else{
             $shareLinkFamily = [];
         }
-        return $this->render('WishBundle:Default:wishList.html.twig', array('shareLink'=> $shareLink,'shareLinkFamily'=>$shareLinkFamily,'brother_families' => $brother_families,'members_zero' => $members_zero, 'wishes' => $wishes, "user" => $this->getUser(),'family_members'=>$family_members, 'isHiddenCouple' => $isHiddenCouple, 'isHiddenFamily'=>$isHiddenFamily));
+        return $this->render('WishBundle:Default:wishList.html.twig', array(
+            'shareLink'=> $shareLink,
+            'shareLinkFamily'=>$shareLinkFamily,
+            'brother_families' => $brother_families,
+            'members_zero' => $members_zero,
+            'wishes' => $wishes,
+            "user" => $this->getUser(),
+            'family_members'=>$family_members,
+            'isHiddenCouple' => $isHiddenCouple,
+            'isHiddenFamily'=>$isHiddenFamily,
+            'nbNotif' => $nbNotif,
+        ));
     }
 
 
@@ -222,6 +236,7 @@ class DefaultController extends Controller
         $event = $repository->findOneBy(array('id' => 1)); 
         $user = $this->getUser();
         
+        
         $auth_checker = $this->get('security.authorization_checker');
         $isRoleUser = $auth_checker->isGranted('ROLE_USER');
         $owner = $shareLink->getUser();
@@ -264,7 +279,9 @@ class DefaultController extends Controller
 
 
         
-       
+        $nbNotif = $this->forward('NotifBundle:Default:countNotif', array(
+            'user_id'  => $user->getId(),
+        ))->getContent();
         $ownerFamilyMembers =[];
         if ($shareLink->getIsFamily() == true){
             
@@ -286,12 +303,25 @@ class DefaultController extends Controller
                 array_push($ownerFamilyLinks, array('id' => $member->getId(), 'shortner' => $invitation->getShortner(), 'firstname' => $member->getFirstname(), 'picture' => $member->getImageName()));
            //     $ownerFamilyLinks[$member->getId()] = array('shortner' => $invitation->getShortner(), 'firstname' => $member->getFirstname(), 'picture' => $member->getImageName());
             }
-            return $this->render('WishBundle:Default:wishListShared.html.twig', array('owner'=>$owner, 'wishes' => $wishes, 'belongFamily' => $belongFamily, 'brother_families' => $brother_families, 'family_zero_members' => $ownerFamilyLinks));
+            return $this->render('WishBundle:Default:wishListShared.html.twig', array(
+                'owner'=>$owner,
+                'wishes' => $wishes,
+                'belongFamily' => $belongFamily,
+                'brother_families' => $brother_families,
+                'family_zero_members' => $ownerFamilyLinks,
+                'nbNotif' => $nbNotif,
+            ));
             
         }
         else{           
             
-            return $this->render('WishBundle:Default:wishListShared.html.twig', array('owner'=>$owner, 'wishes' => $wishes, 'belongFamily' => $belongFamily, 'brother_families' => $brother_families));
+            return $this->render('WishBundle:Default:wishListShared.html.twig', array(
+                'owner'=>$owner,
+                'wishes' => $wishes,
+                'belongFamily' => $belongFamily,
+                'brother_families' => $brother_families,
+                'nbNotif' => $nbNotif,
+            ));
             
 
         }
@@ -306,6 +336,8 @@ class DefaultController extends Controller
         
          $repository    = $this->getDoctrine()->getManager()->getRepository('UserBundle:User');
          $user = $repository->findOneBy(array('emailCanonical' => $email));
+
+        
        
          $repository    = $this->getDoctrine()->getManager()->getRepository('EventBundle:Event');
          $event_entity = $repository->findOneBy(array('id' => $event));
@@ -325,7 +357,9 @@ class DefaultController extends Controller
             }
         }
 
-
+        $nbNotif = $this->forward('NotifBundle:Default:countNotif', array(
+            'user_id'  => $userOnline->getId(),
+        ))->getContent();
         if($access_granted){
 
        
@@ -430,11 +464,27 @@ class DefaultController extends Controller
         }
        
 
-         return $this->render('WishBundle:Default:wishList.html.twig', array('event' => $event, 'brother_families' => $brother_families,'members_zero' => $members_zero, 'wishes' => $wishes, "user" => $user,'family_members'=>$members_accounting, 'isHiddenCouple' => $isHiddenCouple, 'isHiddenFamily'=>$isHiddenFamily, 'shareLink' => $shareLink, 'shareLinkFamily' => $shareLinkFamily));
+         return $this->render('WishBundle:Default:wishList.html.twig', array(
+             'event' => $event,
+             'brother_families' => $brother_families,
+             'members_zero' => $members_zero,
+             'wishes' => $wishes,
+             "user" => $user,
+             'family_members'=>$members_accounting,
+             'isHiddenCouple' => $isHiddenCouple,
+             'isHiddenFamily'=>$isHiddenFamily,
+             'shareLink' => $shareLink,
+             'shareLinkFamily' => $shareLinkFamily,
+             'nbNotif' => $nbNotif,
+            ));
         }
         else
         {
-            return $this->render('error.html.twig', array('error' =>"Oups, vous n'avez pas l'autorisation d'être ici", 'brother_families' => $brother_families));            
+            return $this->render('error.html.twig', array(
+                'error' =>"Oups, vous n'avez pas l'autorisation d'être ici", 
+                'brother_families' => $brother_families,
+                'nbNotif' => $nbNotif,
+            ));            
         }
      }
 

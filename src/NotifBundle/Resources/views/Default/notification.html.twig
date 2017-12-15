@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" style="     margin:0;
+   padding:0;">
+   <head>
+      <!-- If you delete this tag, the sky will fall on your head -->
+      <meta name="viewport" content="width=device-width" />
+      <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+      <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
+      <link href="http://allfont.net/allfont.css?fonts=montserrat-light" rel="stylesheet" type="text/css" />
+      <link href="http://allfont.net/allfont.css?fonts=montserrat-hairline" rel="stylesheet" type="text/css" />
+      <link rel="stylesheet" href="path/to/font-awesome/css/font-awesome.min.css">
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+      <title>Agathe Vous Gâte</title>
+      <link rel="stylesheet" type="text/css" href="stylesheets/email.css" />
+   </head>
+   <body  >
+      <table cellpadding="0" cellspacing="0" width="100%" style="width:100%;background-color:#F5F5F5; font-family: 'Montserrat', 'Helvetica', Helvetica, Arial, sans-serif;" >
+         <tbody>
+            <tr>
+               <td align="center">
+                  <table class="head-wrap" style="width:100%;max-width: 600px;">
+                     <tbody>
+                        <tr>
+                           <td class="header container" style="margin:0; padding:0;">
+                              <div class="content" style="padding:15px 0px 0px 0px ;max-width:600px;margin:0 auto;">
+                                 <table bgcolor="#F5F5F5" style="width: 100%;">
+                                    <tbody>
+                                       <tr>
+                                         <td><img style="width:auto; height:22px;" alt="logo_familyt" src="{{ asset('img/logo_familyt.png') }}" </td>
+                                       </tr>
+                                    </tbody>
+                                 </table>
+                              </div>
+                           </td>
+                        </tr>
+                     </tbody>
+                  </table>
+                  <table class="body-wrap" cellpadding="0" cellspacing="0" style="width:100%;margin:0 auto;max-width:600px; padding:0;">
+                     <tbody>
+                        <tr>
+                           <td class="container" style="    ;margin:0;padding:0px;border:1px solid #b8b7bb"  bgcolor="#FFFFFF">
+                              <div class="content" style="max-width:598px;display:block; ">
+                                 <table style="width: 100%;border-spacing:0px; " >
+                                    <tr>
+                                       <td cellpadding="0" style="padding:0px;width:100%; background-color:#49a0b5; height:239px;max-height:239px;color:white;" valigne="middle" height="239px" >
+                                          <div  align="center"   border="0"  >
+                                             <p style=" font-family: 'Montserrat Light', 'Helvetica', Helvetica, Arial, sans-serif;vertical-align:middle;margin:0px;font-size:28px; width:100%; height:100%;">⚠️ Nouvelle notification<br> </p>
+                                             <!-- /hero -->
+                                          </div>
+                                       </td>
+                                    </tr>
+                                 </table>
+                              </div>
+                              <div class="content" style="max-width:598px;display:block; ">
+                                 <table style="width: 90%;border-spacing:0px; margin: 10px auto; " >
+                                    <tbody>
+                                       <tr>
+                                          <td>
+                                             <div>
+
+																								Bonjour {{ user.firstname }} <br><br>
+
+                                                
+                                                {% if entity_type == 'comment' %}
+                                                  Un nouveau commentaire vient d'être ajouté par {{ entity.author.Firstname }} sur {% if entity.wish.author != user %}le voeux {{ entity.wish.description }} de {{ entity.wish.author.firstname }}{% else %}votre voeux {{ entity.wish.description }}{% endif %}<br>
+                                                  Pour le consulter, c'est <a href="{{ path('wishListByEmail', {email: entity.wish.author.email}) }}">ici</a>
+
+                                                {% elseif entity_type == 'new_member' %}
+                                                    Bonne nouvelle ! <br>
+                                                    {{ entity.firstname }} {{ entity.lastname }} vient de rejoindre votre famille sur Famil.yt !
+                                                {% endif %}
+                                                <br><br>
+                                                A bientôt, 
+                                             </div>
+                                          </td>
+                                       </tr>
+                                    </tbody>
+                                 </table>
+                              </div>
+                           </td>
+                        </tr>
+                     </tbody>
+                  </table>
+                  <table cellpadding="0" cellspacing="0" width="100%" style="margin:10px auto;max-width:600px; padding:0;" >
+                     <tbody>
+                        <tr>
+                           <td>
+                              <div style="position:relative; color:white">
+                                 <table  cellpadding="0" cellspacing="0" width="100%">
+                                    <tbody>
+                                       <tr>
+                                          <td align="center">
+                                             <p style="height:100%; margin:0px;font-size:25px; width:100%">
+                                                 <img src="{{ asset('img/logo_familyt.png') }}" alt="logo_agathevousgate" style="height: auto; max-height:22px">                                             </p>
+                                             <p style="height:100%; margin:0px;font-size:25px;width:100%; margin-top:10px;">
+                                                <a target="_blank" href="https://www.facebook.com/familyt/"><img style="margin-right:20px; max-height:20px;" src="http://agathevousgate.fr/web/img/facebook.png"></a>
+                                                <a target="_blank" href="https://www.instagram.com/familyt/"><img style="max-height:20px;" src="http://agathevousgate.fr/web/img/instagram.png"></a>
+                                             </p>
+                                             <p style="height:100%;color:#696f6f;margin:0px;font-size:10px;width:100%; margin-top:20px;">
+                                                2018 <a  target="_blank" href="https://gilbert.famil.yt">Familyt</a> - Tous droits réservés
+                                             </p>
+                                          </td>
+                                       </tr>
+                                    </tbody>
+                                 </table>
+                              </div>
+                           </td>
+                        </tr>
+                     </tbody>
+                  </table>
+               </td>
+            </tr>
+         </tbody>
+      </table>
+   </body>
+</html>

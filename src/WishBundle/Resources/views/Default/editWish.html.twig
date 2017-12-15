@@ -1,0 +1,36 @@
+Edit wish <br>
+
+  <input type="text" name="description" id="description_field" value="{{wish.description}}">
+  <input type="text" name="wish" id="id_field" value="{{wish.id}}">
+  <input type="text" name="url" id="url_field" value="{{wish.url}}" >
+
+<button onclick="editWish()">valider</button>
+<form action="{{path('editWish', {'id': wish.id} )}}"  method="post" id="redirect-form" name="redirect-form"> 
+
+  <input type="text" name="wish" id="editWish" >
+  <button type="submit" id="buttonValidate">Valider</button>
+  </form>
+
+  <script>
+
+  function editWish(){
+    var frm = document.getElementById('editWish') || null;
+    var value = '{"id":"ID","description":"DESCRIPTION","url":"URL","status":true}';
+    value = value.replace("DESCRIPTION", document.getElementById('description_field' ).value);
+    value = value.replace("ID", document.getElementById('id_field' ).value);
+    if(document.getElementById('url_field' ).value == ''){
+            value = value.replace("URL", null);
+    }
+    else{
+    value = value.replace("URL", document.getElementById('url_field' ).value);
+
+    }
+
+    if(frm) {
+    frm.value = value;
+    }
+    //document.getElementById("buttonValidate").click();
+  }
+ 
+
+</script>

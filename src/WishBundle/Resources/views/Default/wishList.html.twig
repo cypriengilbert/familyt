@@ -1,0 +1,772 @@
+{% extends 'base.html.twig' %}
+{% block stylesheets %}
+<link type="text/css" rel="stylesheet" href="{{ asset('css/wishList.css') }}"/>
+<script src="{{ asset('js/moment.js') }}"></script>
+<link href="{{ asset('js/toastr/build/toastr.css') }}" rel="stylesheet"/>
+<script src="{{ asset('js/clipboard/dist/clipboard.min.js') }}"></script>
+
+
+<script>
+   moment.locale('fr', {
+   months : 'janvier_février_mars_avril_mai_juin_juillet_août_septembre_octobre_novembre_décembre'.split('_'),
+   monthsShort : 'janv._févr._mars_avr._mai_juin_juil._août_sept._oct._nov._déc.'.split('_'),
+   monthsParseExact : true,
+   weekdays : 'dimanche_lundi_mardi_mercredi_jeudi_vendredi_samedi'.split('_'),
+   weekdaysShort : 'dim._lun._mar._mer._jeu._ven._sam.'.split('_'),
+   weekdaysMin : 'Di_Lu_Ma_Me_Je_Ve_Sa'.split('_'),
+   weekdaysParseExact : true,
+   longDateFormat : {
+     LT : 'HH:mm',
+     LTS : 'HH:mm:ss',
+     L : 'DD/MM/YYYY',
+     LL : 'D MMMM YYYY',
+     LLL : 'D MMMM YYYY HH:mm',
+     LLLL : 'dddd D MMMM YYYY HH:mm'
+   },
+   calendar : {
+     sameDay : '[Aujourd’hui à] LT',
+     nextDay : '[Demain à] LT',
+     nextWeek : 'dddd [à] LT',
+     lastDay : '[Hier à] LT',
+     lastWeek : 'dddd [dernier à] LT',
+     sameElse : 'L'
+   },
+   relativeTime : {
+     future : 'dans %s',
+     past : 'il y a %s',
+     s : 'quelques secondes',
+     m : 'une minute',
+     mm : '%d minutes',
+     h : 'une heure',
+     hh : '%d heures',
+     d : 'un jour',
+     dd : '%d jours',
+     M : 'un mois',
+     MM : '%d mois',
+     y : 'un an',
+     yy : '%d ans'
+   },
+   dayOfMonthOrdinalParse : /\d{1,2}(er|e)/,
+   ordinal : function (number) {
+     return number + (number === 1 ? 'er' : 'e');
+   },
+   meridiemParse : /PD|MD/,
+   isPM : function (input) {
+     return input.charAt(0) === 'M';
+   },
+   // In case the meridiem units are not separated around 12, then implement
+   // this function (look at locale/id.js for an example).
+   // meridiemHour : function (hour, meridiem) {
+   //     return /* 0-23 hour, given meridiem token and hour 1-12 */ ;
+   // },
+   meridiem : function (hours, minutes, isLower) {
+     return hours < 12 ? 'PD' : 'MD';
+   },
+   week : {
+     dow : 1, // Monday is the first day of the week.
+     doy : 4  // The week that contains Jan 4th is the first week of the year.
+   }
+   });
+
+
+   
+</script>
+<style>
+
+  @media (max-width: 768px) {
+  
+  #comment_column{
+    width:100%;
+  }}
+   #checkboxes_buyer{
+   margin-top:10px;
+   }
+   #checkboxes_buyer > input[type="checkbox"]{display:none;}
+   #checkboxes_buyer > input[type="checkbox"] + label > span{
+   max-height:100px;
+   padding:10px;
+   border-radius:60px;
+   text-align:center;
+   width:100%;
+   }
+   #checkboxes_buyer > input[type="checkbox"]:checked + label > span {
+   }
+   #checkboxes_buyer > input[type="checkbox"] + label > span >img {
+   max-height:40px;
+   border-radius:20px;
+   }
+   #checkboxes_buyer > input[type="checkbox"] + label  > #is_contributor_icon{
+   display:none!important;
+   position:relative;
+   color:green;
+   left:25px;
+   top:-40px;
+   }
+   #checkboxes_buyer > input[type="checkbox"]:checked + label  > #is_contributor_icon{
+   display:block!important;
+   }
+</style>
+
+{% endblock %}
+{% block body %}
+<div class="container">
+     <div  v-if="is_owner"  class="row" id="share" style='margin-bottom:20px;'>
+      <b-col cols="12" class="text-right">
+      <span v-if="!share_link_family">
+          <b-button v-if="!share_link" variant="info" @click="shareList">Partager ma liste</b-button>
+          <b-input v-else  v-bind:data-clipboard-text="share_link" v-model="share_link"/>
+      </span>
+      </b-col>
+      <b-col cols="12" class="text-right">
+          <b-button variant="info" v-if="!share_link_family" @click="shareListFamily">Partager la liste famille</b-button>
+          <b-input v-else  v-bind:data-clipboard-text="share_link_family" v-model="share_link_family"/>
+         
+      </b-col>
+     </div>
+   <div class="row" id="head" style='margin-bottom:20px;'>
+    <b-col cols="12" class="text-center">
+      <div>
+      <b-nav fill tabs >
+       
+        <b-nav-item v-for="member in family_zero_members" :href="member.url" v-bind="{ active: member.isActive }" >
+          <img :src="member.image_url" style="height:30px;"> ${member.firstname}
+        </b-nav-item>
+        
+        
+      </b-nav>
+    </div>
+    </b-col>
+   </div>
+   <div class="row">
+      <div id="container_table">
+         <b-container>
+            <b-row>
+               <b-col>
+                  <div id="table1">
+                     <b-table  striped hover :items="wishes" :fields="fields" >
+                        <template slot="common"  scope="data">
+                           <div>
+                              <span v-if="data.item.isFamily" style="font-size:30px">👨‍👩‍👧‍👦 </span>
+                              <span v-if="data.item.isCouple" style="font-size:30px">💏 </span>
+
+                              <input v-if="is_owner" class="edit" type="text" v-model="data.item.description" v-on:keyup.enter="editWish(data.index, data.item.id)"/>
+                           </div>
+                        </template>
+                        
+                        <template slot="take"  scope="data" v-if="!data.item.isHiddenCouple">
+                        <span v-if="!isChild">
+                           <b-tooltip v-bind:target="data.item.id" v-bind:title="data.item.buyer"></b-tooltip>
+                           <label class="label" v-bind:id="data.item.id" v-if="!data.item.isUserCouple">
+                           <input class="label__checkbox" type="checkbox" :checked="!data.item.status" @click="changeStatus(data.item, data.index)" :disabled="!data.item.can_take"/>
+                           <span class="label__text">
+                           <span class="label__check">
+                           <i class="fa fa-check icon"></i>
+                           </span>
+                           </span>
+                           </label>
+                            </span>
+                        </template>
+                     
+                        
+                        <template slot="description"  scope="data">
+                           <div v-bind:class="{ editing: data.item == editedWish }" >
+                              <span v-bind:class="" class="view" @click="editDescription(data.item)" >${ data.item.description }</span>
+                              <span style=" display:flex;flex-direction:row;"><input class="edit" style="flex-grow:2; "  type="text" v-model="data.item.description" v-on:keyup.enter="editWish(data.index, data.item.id)"/><button type="submit" style="border:1px solid #49a0b5;background:#49a0b5;color:white;max-width:40px;cursor:pointer;" v-if="is_owner" class="edit" v-on:click="editWish(data.index, data.item.id)"><i class="fa fa-check fa" aria-hidden="true"></i></button><button type="submit" style="border:1px solid red;background:red;color:white;max-width:40px;cursor:pointer;" v-if="is_owner" class="edit" v-on:click="exitEdit(data.item, data.index)"><i class="fa fa-remove fa" aria-hidden="true"></i></button></span>
+                           </div>
+                        </template>
+                        <template slot="url"  scope="data">
+                           <div v-bind:class="{ editing: data.item == editedWish_url }">
+                              <span  class="view" @click="editUrl(data.item)" >
+                                 <span v-if="is_owner">
+                                    <b-button v-if="data.item.url == '' " size="" variant="success">
+                                       Ajouter un lien
+                                    </b-button>
+                                 </span>
+                                 <a v-if="data.item.url != ''" v-bind:href="data.item.url" target="_blank">${data.item.url}</a>
+                              </span>
+                              <input v-if="is_owner" class="edit" type="text" v-model="data.item.url" v-on:keyup.enter="editWish(data.index, data.item.id)"/>
+                           </div>
+                        </template>
+                        <template slot="status"  scope="data" >
+                        <span v-if="!isChild">
+                        <span v-if="!data.item.isUserCouple">
+                           <span v-if="data.item.status == 1" >
+                              <b-badge pill variant="success">Disponible</b-badge>
+                           </span>
+                           <span v-else >
+                              <b-badge pill variant="danger">Indisponible</b-badge>
+                           </span>
+                          </span>
+                          </span>
+                        </template>
+                        <template  slot="action"  scope="data">
+                           <span v-on:click="removeWish(data.index, data.item.id)"><i class="fa fa-trash-o fa-2x" aria-hidden="true"></i></span>
+                        </template>
+                        <template slot="comment"  scope="data">
+                           <span @click="showComments(data.item.id, data.index)" style="cursor:pointer">
+                              <i class="fa fa-commenting-o fa-2x" aria-hidden="true"></i>
+                              <b-badge  style=" position:relative; left:-10px;" variant="info">${data.item.nb_comment }</b-badge>
+                           </span>
+                        </template>
+                     </b-table>
+                     <span v-if="is_owner" style=" display:flex;flex-direction:row;">         
+
+                        <input type="checkbox" v-show="false" v-model="isFamily" name="isFamily"  id="isFamily"> <label v-show="false" for="isFamily"> Commun Famille ?</label>
+                        <input type="checkbox" v-model="isCouple" name="isCouple" id="isCouple"> <label for="isCouple"> Commun Couple ?</label>
+
+                        <input type="text"  v-on:keyup.enter="addWish" style="flex-grow:2; " v-model="description" name="description" id="description_field" value="" required placeholder="Ajouter un voeux" style="width:60%">
+                        <b-button v-on:click="addWish" size="" variant="success" style="cursor:pointer;">
+                           Valider
+                        </b-button>
+                     </span>
+                     <template>
+                        <b-modal v-model="modalShow" title="Associer une dépense ?"
+                           :header-bg-variant="headerBgVariant"
+                           :header-text-variant="headerTextVariant"
+                           :body-bg-variant="bodyBgVariant"
+                           :body-text-variant="bodyTextVariant"
+                           :footer-bg-variant="footerBgVariant"
+                           :footer-text-variant="footerTextVariant">
+                           <b-container fluid>
+                              <b-row class="mb-1">
+                                 <b-col cols="5">Montant</b-col>
+                                 <b-col><input type="number" v-model="expense.amount" required placeholder="00,00" style="width:90%"></b-col>
+                              </b-row>
+                              <b-row class="mb-1">
+                                 <b-col cols="5">Un commentaire ?</b-col>
+                                 <b-col><input type="text" v-model="expense.description" name="description" id="description_field" value="" required placeholder="blablabla" style="width:90%"></b-col>
+                              </b-row>
+                              <b-row class="mb-1">
+                                 <b-col cols="5">Qui participe ?</b-col>
+                              </b-row>
+                              <b-row class="mb-1">
+                                 <b-col  v-for="member in family_members" style="text-align:center">
+                                    <span id="checkboxes_buyer">
+                                    <input v-model="expense.contributors" v-bind:value="member.id" v-bind:id="member.id" type="checkbox" /> <label v-bind:for="member.id" ><span><img v-bind:src="member.image_url"><br></span><span>${ member.username }</span>  <i id="is_contributor_icon" class="fa fa-check fa" aria-hidden="true"></i></label>
+                                    </span>
+                                 </b-col>
+                              </b-row>
+                           </b-container>
+                           <div slot="modal-footer" class="w-100">
+                              <p v-if="this.wish_expense != null" class="float-left">Ceci est une dépense pour un(e) ${ this.wish_expense.description }. </p>
+                              <b-btn style="cursor:pointer" size="sm" class="float-left" variant="danger" @click="modalShow = !modalShow">
+                                 Non merci, pas de dépense
+                              </b-btn>
+                              <b-btn style="cursor:pointer" size="sm" class="float-right" variant="primary" @click="addExpense">
+                                 Ajouter une dépense
+                              </b-btn>
+                           </div>
+                        </b-modal>
+                     </template>
+                  </div>
+               </b-col>
+            </b-row>
+         </b-container>
+      </div>
+      <div v-if="active_comments" id="comment_column">
+         <span id="exitMessage"  v-on:click="hideComments"><i class="fa fa-times" aria-hidden="true"></i>
+         </span>
+         <b-input-group class="messages_input" style="width:100%">
+          <span style=" display:flex;flex-direction:row;width:100%">
+            <b-form-input v-on:keyup.enter="addComment" v-model="content"   placeholder="Ajouter un commentaire" ></b-form-input>
+            <b-input-group-button slot="right">
+               <b-btn variant="info" v-on:click="addComment" style="cursor:pointer"><i class="fa fa-paper-plane-o" aria-hidden="true"></i></b-btn>
+            </b-input-group-button>
+         </b-input-group>
+         <div style="overflow:scroll; height:100%">
+            <span v-for="(message, index) in messages" >
+               <p class="triangle-border" style="position:relative;"><span v-if="editedComment != message.id" v-on:click="openEditComment(message.id, message.author, user)">${ message.text }</span><span v-if="message.isEdited" style="font-size:9px; color:grey;"> (édité)</span>
+              <span v-if="editedComment == message.id" style=" display:flex;flex-direction:row;max-width:80%"><input style="flex-grow:2; "  type="text" v-model="message.text" v-on:keyup.enter="editComment(message.id, index)"/><button type="submit" style="border:1px solid #49a0b5;background:#49a0b5;color:white;max-width:40px;cursor:pointer;"  v-on:click="editComment(index, message.id)"><i class="fa fa-check fa" aria-hidden="true"></i></button></button></span>
+                             
+                  <span class="message_author">
+                  ${ message.author }, ${ message.date.date | moment }
+                  </span>
+                  <span v-if="message.author == user" style="position:absolute; top:0px; right:5px; cursor:pointer" v-on:click="removeComment(message.id, index)">
+                  <i class="fa fa-trash-o" aria-hidden="true"></i>
+                  </span>
+               </p>
+               
+               
+         </div>
+         </span>
+      </div>
+   </div>
+</div>
+{% endblock %}
+{% block javascripts %}
+
+<script>
+  toastr.options = {
+  "positionClass": "toast-top-center",
+}
+</script>
+<script>
+  var share = new Vue({
+    delimiters: ['${', '}'],
+    el: '#share',
+    data: {
+      share_link: {% if shareLink is defined and shareLink is not empty %}'https://gilbert.famil.yt{{ path('wishListInvit', {shortner: shareLink})}}'{% else %}null{% endif %},
+      share_link_family: {% if shareLinkFamily is defined and shareLinkFamily is not empty %}'https://gilbert.famil.yt{{ path('wishListInvit', {shortner: shareLinkFamily})}}'{% else %}null{% endif %},
+      is_owner: {% if user == app.user or (user.isChild == true and user.Families[0].admin == app.user) %}true{% else %}false{% endif %},
+
+    },
+     methods: {
+     shareList: function () {
+       $.ajax({
+         type: "POST",
+         url: "{{ path('wishCreateInvitation')}}",
+         data: {isFamily: 0},
+         cache: false,
+         success: function(result){
+           if(isFamily){
+             this.share_link = 'https://gilbert.famil.yt/web/app_dev.php/wish/shared/'+result[0].shortner;
+           }
+           else{
+             this.share_link_family = 'https://gilbert.famil.yt/web/app_dev.php/wish/shared/'+result[0].shortner;
+           }
+        toastr.info("Oki Doki! Tu peux maintenant partager ta liste ;)");
+
+         }.bind(this),
+         error : function(resultat, statut, erreur){
+          toastr.error("Oups, une erreur s'est produite 😩");
+        }
+     });
+     },
+     shareListFamily: function () {
+    $.ajax({
+         type: "POST",
+         url: "{{ path('wishCreateInvitation')}}",
+         data: {isFamily: 1},
+         cache: false,
+         success: function(result){
+           if(isFamily){
+             this.share_link = 'https://gilbert.famil.yt/web/app_dev.php/wish/shared/'+result[0].shortner;
+           }
+           else{
+             this.share_link_family = 'https://gilbert.famil.yt/web/app_dev.php/wish/shared/'+result[0].shortner;
+           }
+        toastr.info("Oki Doki! Tu peux maintenant partager ta liste ;)");
+
+         }.bind(this),
+         error : function(resultat, statut, erreur){
+          toastr.error("Oups, une erreur s'est produite 😩");
+        }
+     });
+     },
+     },
+  });
+
+  var head = new Vue({
+    delimiters: ['${', '}'],
+    el: '#head',
+    data: {
+      event: "Noël",
+      user: '{{user.firstname}}',
+      family_zero_members: [{% for member in members_zero %}{% if member %} { url: '{{path('wishListByEmail', {email: member.email, event: 1})}}', isActive: {% if member == user %}true{% else %}false{% endif %} ,firstname: '{{ member.firstname }}', id: '{{ member.id }}' , image_url:'{{ asset("upload/user/"~ member.ImageName ) }}'}{% if loop.last == false %},{% endif %}{% endif %}{% endfor %}],
+    },
+
+  });
+
+   var table1 = new Vue({
+   delimiters: ['${', '}'],
+   el: '#table1',
+   data: {
+     wishes: [{% for wish in wishes %} {isUserCouple: {% if wish.coauthor != app.user and wish.author != app.user %}false{% else %}true{% endif %}, _rowVariant: '', nb_comment:'{{ wish.comments|length }}', can_take: {% if wish.buyer is null or app.user == wish.buyer  %}true{% else %}false{% endif %}, buyer: '{{ wish.buyer }}', hiddenFamily: '{{isHiddenFamily}}', hiddenCouple: '{{isHiddenCouple}}', isFamily: '{{ wish.isFamily }}',isCouple: {% if wish.isCouple %}true{% else %}false{% endif %},id: '{{ wish.id }}', url: '{{ wish.url }}', description: '{{ wish.description }}', date: '{{ wish.date|date("d-m-Y") }}' {% if  wishes[0] and wishes[0].author != app.user %}, status: '{{wish.status}}' {% else %},status:1{% endif %}}{% if loop.last == false %},{% endif %}{% endfor %}],
+     fields: [
+
+
+       {% if wishes and (wishes[0].author != app.user and wishes[0].coauthor != app.user) %}
+       {
+         key: 'take',
+         label: 'Je prends',
+         sortable: false,
+         'class': 'text-center'
+         
+       },
+       {% endif %}
+
+        {
+         key: 'common',
+         label: ' ',
+         sortable: false,
+         'class': 'text-center'
+         
+       },
+       {
+         key: 'description',
+         sortable: false,
+         label: 'Description',
+         'class': 'text-center'
+       },
+       {
+         key: 'url',
+         label: 'Lien',
+         sortable: false,
+         'class': 'text-center'
+         
+       },
+       
+       {% if wishes and ((wishes[0].author == app.user or wishes[0].coauthor == app.user) or (user.isChild == true and user.Families[0].admin == app.user)) %}
+       
+       {
+         key: 'action',
+         label: '',
+         sortable: false,
+         'class': 'text-center'
+         
+       },
+       {% else %}
+       
+       
+       {
+         key: 'status',
+         label: 'Statut',
+         sortable: true,
+         'class': 'text-center'
+         
+       },
+       {% endif %}
+       {
+         key: 'comment',
+         label: 'Commentaires',
+         sortable: false,
+         'class': 'text-center'
+         
+       },
+   
+     ],
+     family_members: [{% for member in family_members %}{% if member %} { username: '{{ member.firstname }}', id: '{{ member.id }}' , image_url:'{{ asset("upload/user/"~ member.ImageName ) }}'}{% if loop.last == false %},{% endif %}{% endif %}{% endfor %}],
+     editedWish: null,
+     editedWish_url: null,
+     is_owner: {% if user == app.user or (user.isChild == true and user.Families[0].admin == app.user) %}true{% else %}false{% endif %},
+     user: '{{ app.user.username }}',
+     modalShow: false,
+     variants: [
+         'primary','secondary','success','warning','danger','info','light','dark'
+        ],
+     headerBgVariant: 'info',
+     headerTextVariant: 'light',
+     bodyBgVariant: 'light',
+     bodyTextVariant: 'dark',
+     footerBgVariant: 'dark',
+     footerTextVariant: 'light',
+     expense: {description: '', amount:0, contributors:[]},
+     wish_expense:null,
+     isFamily:false,
+     isCouple:false,
+     event: 1,
+     listOwner: '{{ user.id }}',
+     isChild: {% if app.user.isChild == true %}true{% else %}false{% endif %},
+     temp_description: null,
+   
+   },
+   methods: {
+     
+     addWish: function () {
+     $.ajax({
+         type: "POST",
+         url: "{{ path('addWishAjax')}}",
+         data: {description : this.description, isFamily: this.isFamily, isCouple: this.isCouple, event:this.event, user: this.listOwner},
+         cache: false,
+         success: function(result){
+           this.wishes.push(
+              {
+                id: result[0].id,
+                description: result[0].description,
+                isFamily: result[0].isFamily,
+                isCouple: result[0].isCouple,
+                {% if  wishes and wishes[0].author != app.user %}status: result[0].status,{% else %}status: 1,{% endif %}
+                 url: result[0].url,
+                 nb_comment:0,
+              }
+            );
+           this.description = '';
+           this.isFamily = false;
+           this.isCouple = false;
+          
+         }.bind(this),
+         error : function(resultat, statut, erreur){
+          toastr.error("Oups, une erreur s'est produite 😩");
+        }
+     }); 
+   },
+   addExpense: function () {
+     
+     $.ajax({
+         type: "POST",
+         url: "{{ path('addExpense')}}",
+         data: {amount : this.expense.amount, comment: this.expense.description, contributors:this.expense.contributors, wish: this.wish_expense.id},
+         cache: false,
+         success: function(result){
+           this.expense.amount = null;
+           this.expense.description = null;
+          this.expense.contributors = [];
+          this.wish_expense.id = null;
+          this.modalShow = !this.modalShow;
+          toastr.info("Dépense ajoutée ! 💸");
+
+   
+         }.bind(this),
+         error : function(resultat, statut, erreur){
+          toastr.error("Oups, une erreur s'est produite 😩");
+        }
+     }); 
+   },
+   removeWish: function (index, id) {
+     $.ajax({
+         type: "POST",
+         url: "{{ path('removeWishAjax')}}",
+         data: {id : id},
+         cache: false,
+         success: function(result){
+           this.wishes.splice(index, 1);
+          toastr.info("Tes désirs sont des ordres. Le voeux a bien été supprimé 👌");
+
+         }.bind(this),
+         error : function(resultat, statut, erreur){
+          toastr.error("Oups, une erreur s'est produite 😩");
+
+           
+        }
+     });
+   },
+
+   changeStatus: function (data, index) {
+     status_temp = data.status;
+     if(!data.buyer || data.buyer == this.user ){
+       $.ajax({
+         type: "POST",
+         url: "{{ path('changeStatus')}}",
+         data: {id : data.id},
+         cache: false,
+         success: function(result){
+           this.wishes[index].status = result[0].status;
+           this.wishes[index].buyer = result[0].buyer;
+           if (result[0].status !== true){
+           this.modalShow = !this.modalShow;
+           }
+           
+           this.wish_expense = this.wishes[index];
+          toastr.info('Ok. Cest noté');
+
+         }.bind(this),
+         error : function(resultat, statut, erreur){
+          toastr.error("Oups, une erreur s'est produite 😩");
+        }
+     });
+     }
+   },
+   editDescription: function(item) {
+     if(this.is_owner){
+       this.editedWish = item;
+      this.temp_description = item.description;
+
+     }
+   },
+   exitEdit:function(item, index){
+          this.wishes[index].description = this.temp_description;
+           this.editedWish = null;
+   },
+     editUrl: function(item) {
+       if(this.is_owner){
+     this.editedWish_url = item;
+     }
+   },
+    
+   editWish: function(index, id) {
+     var Url_temp = this.wishes[index].description;
+     var description_temp = this.wishes[index].description;
+     $.ajax({
+         type: "POST",
+         url: "{{ path('editWishAjax')}}",
+         data: {id : this.wishes[index].id, url : this.wishes[index].url, description: this.wishes[index].description},
+         cache: false,
+         success: function(result){
+           this.wishes[index].description = result[0].description;
+           this.wishes[index].url = result[0].url;
+           this.editedWish = null;
+           this.editedWish_url = null;
+           toastr.info('Modification validé, Chef ! 🤠');
+
+         }.bind(this),
+         error : function(resultat, statut, erreur){
+           
+          toastr.error("Oups, une erreur s'est produite 😩");
+        }
+     });
+   },
+   showModal() {
+         this.$refs.myModalRef.show();
+   }, 
+   hideModal() {
+        this.$refs.myModalRef.hide(); 
+    },
+   
+   showComments: function (id,index) {
+     if(comments_column.active_comments !== null){
+       comments_column.active_comments = null;
+     }
+     else{
+      $.ajax({
+         type: "POST",
+         url: "{{ path('comments')}}",
+         data: {id : id},
+         cache: false,
+         success: function(result){
+           comments_column.active_comments = id;
+           $.each(this.wishes, function(index, element) {
+             element._rowVariant = '';
+            });
+           this.wishes[index]._rowVariant = 'secondary';
+           comments_column.messages = [];
+            $.each(result, function(index, element) {
+             comments_column.messages.push(
+              {
+                text: element.content,
+                author: element.author,
+                date: element.date,
+                id: element.id,
+                isEdited: element.isEdited,
+              }
+             );
+             
+            });
+         }.bind(this),
+         error : function(resultat, statut, erreur){
+          toastr.error("Oups, une erreur s'est produite 😩");
+        }
+     });
+   
+   }
+   },
+   }
+   });
+   
+   
+   var comments_column = new Vue({
+   delimiters: ['${', '}'],
+   el: '#comment_column',
+   data: {
+     show: true,
+    user: '{{ app.user.username }}',
+     newContent:'',
+     editedComment: null,
+     messages: [
+      
+       ],
+     active_comments: null,
+   },
+     filters: {
+     moment: function (date) {
+       return moment(date).startOf('minute').fromNow();
+     }
+     },
+    methods: {
+      showComments: function (id) {
+       $.ajax({
+         type: "GET",
+         url: "{{ path('comments')}}",
+         data: {id : id},
+         cache: false,
+         success: function(result){
+         }.bind(this),
+         error : function(resultat, statut, erreur){
+          toastr.error("Oups, une erreur s'est produite 😩");
+        }
+     });
+   },
+     hideComments: function () {
+     comments_column.active_comments = null;
+     $.each(table1.wishes, function(index, element) {
+             element._rowVariant = '';
+            });
+   },
+    removeComment: function (id, index) {
+     $.ajax({
+         type: "POST",
+         url: "{{ path('removeComment')}}",
+         data: {comment : id},
+         cache: false,
+         success: function(result){
+           if(result.statut == 0){
+            toastr.error(result.response);
+           }
+           else if (result.statut == 1){
+             this.messages.splice(index, 1);
+              toastr.info("Tes désirs sont des ordres. Le commentaire a bien été supprimé 👌");
+           }
+         }.bind(this),
+         error : function(resultat, statut, erreur){
+          toastr.error("Oups, une erreur s'est produite 😩"); 
+        }
+     });
+   },
+    openEditComment: function(item, author, user) {
+      if(author == user ){
+this.editedComment = item;
+      }
+     
+   },
+   editComment: function (index, id) {
+     $.ajax({
+         type: "POST",
+         url: "{{ path('editComment')}}",
+         data: {comment : id, value: this.messages[index].text},
+         cache: false,
+         success: function(result){
+           if(result.statut == 0){
+            toastr.error(result.response);
+           }
+           else if (result.statut == 1){
+             
+              toastr.info("Tes désirs sont des ordres. Le commentaire a bien été modifié 👌");
+              this.messages[index].isEdited = true;
+              this.editedComment = null;
+              
+           }
+         }.bind(this),
+         error : function(resultat, statut, erreur){
+          toastr.error("Oups, une erreur s'est produite 😩"); 
+        }
+     });
+   },
+   addComment: function (id) {
+       $.ajax({
+         type: "POST",
+         url: "{{ path('addComment')}}",
+         data: {id : this.active_comments, content:this.content},
+         cache: false,
+         success: function(result){
+           this.messages.push(
+              {
+                text: result[0].content,
+                author: result[0].author,
+                date: result[0].date.date,
+                id: result[0].id,
+                isEdited:result[0].isEdited,
+              }
+             );
+           this.content = '';
+         }.bind(this),
+         error : function(resultat, statut, erreur){
+          toastr.error("Oups, une erreur s'est produite 😩");
+        }
+     });
+   },
+      
+    }
+   });
+   
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@1/dist/clipboard.min.js"></script>
+  <script>
+var clipboard = new Clipboard('.btn');
+clipboard.on('success', function(e) {
+    alert('ok');
+});
+clipboard.on('error', function(e) {
+    console.error('Action:', e.action);
+    console.error('Trigger:', e.trigger);
+});
+</script>
+{% endblock %}

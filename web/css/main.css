@@ -1,0 +1,13 @@
+@import url('https://fonts.googleapis.com/css?family=Khula');
+
+body{
+    font-family:'Khula';
+}
+
+button{
+    cursor:pointer;
+  }
+  
+  .btn{
+    cursor:pointer;
+  }

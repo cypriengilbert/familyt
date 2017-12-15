@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <script src="{{ asset('js/vue.js') }}"></script>
+        <title>{% block title %}Welcome!{% endblock %}</title>
+        {% block stylesheets %}{% endblock %}
+        <link type="text/css" rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}"/>
+        <link type="text/css" rel="stylesheet" href="{{ asset('css/base.css') }}"/>
+        <link type="text/css" rel="stylesheet" href="{{ asset('css/bootstrap-vue.css') }}"/>
+        <link type="text/css" rel="stylesheet" href="{{ asset('css/main.css') }}"/>
+        <link rel="stylesheet" href="{{ asset('css/font-awesome/css/font-awesome.min.css') }}">
+        <link href="https://fonts.googleapis.com/css?family=Khula" rel="stylesheet">
+        {#<script src="//unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>#}
+        <script src="{{ asset('js/bootstrap-vue.js') }}"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" />
+    </head>
+    <header id="navigation">
+         <b-navbar toggleable="md" type="dark" variant="info">
+            <b-nav-toggle target="nav_collapse"></b-nav-toggle>
+            <b-navbar-brand href="#"><img src="{{ asset('img/logo_familyt.png') }}" style="max-height:40px;"></b-navbar-brand>
+            <b-collapse is-nav id="nav_collapse">
+               
+                <b-nav is-nav-bar class="ml-auto">
+                <b-nav right>
+                    <b-navbar-brand right href="{{ path('fos_user_security_login')}}">Se connecter</b-navbar-brand>
+                </b-nav>
+                </b-nav>
+
+            </b-collapse>
+            </b-navbar>
+
+    </header>
+    <body>
+        
+        {% block body %}{% endblock %}
+        {% block javascripts %}{% endblock %}
+    </body>
+    <footer id="footer">
+        <div class="footer">
+            <span>
+                Made with <i class="fa fa-coffee" aria-hidden="true"></i> &  <i class="fa fa-heart" aria-hidden="true"></i> between Lille & Paris
+            </span>
+        </div>
+    </footer>
+    <script>
+    var navigation = new Vue({
+   delimiters: ['${', '}'],
+   el: '#navigation',
+   data: {
+   }
+    });
+    </script>
+</html>

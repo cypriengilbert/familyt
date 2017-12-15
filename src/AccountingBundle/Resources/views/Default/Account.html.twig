@@ -1,0 +1,464 @@
+{% extends 'base.html.twig' %}
+{% block stylesheets %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js" type="text/javascript"></script> 
+
+<script src="{{ asset('js/canvasjs/jquery.canvasjs.min.js') }}"></script>
+<link type="text/css" rel="stylesheet" href="{{ asset('css/expensesList.css') }}"/>
+<style>
+   #checkboxes_buyer{
+   margin-top:10px;
+   }
+   #checkboxes_buyer > input[type="checkbox"]{display:none;}
+   #checkboxes_buyer > input[type="checkbox"] + label > span{
+   max-height:100px;
+   padding:10px;
+   border-radius:60px;
+   text-align:center;
+   width:100%;
+   }
+   #checkboxes_buyer > input[type="checkbox"]:checked + label > span {
+   }
+   #checkboxes_buyer > input[type="checkbox"] + label > span >img {
+   max-height:40px;
+   border-radius:20px;
+   }
+   #checkboxes_buyer > input[type="checkbox"] + label  > #is_contributor_icon{
+   display:none!important;
+   position:relative;
+   color:green;
+   left:25px;
+   top:-40px;
+   }
+   #checkboxes_buyer > input[type="checkbox"]:checked + label  > #is_contributor_icon{
+   display:block!important;
+   }
+</style>
+
+{% endblock %}
+{% block body %}
+{#{% for key, expense_table in expense_table %}
+    {{ key }} - {{expense_table}}
+{% endfor %}#}
+<div class="container">
+   <div class="row">
+      <div id="container_table">
+         <b-container>
+            <b-row style="text-align:center">
+            <span id="expenses_popin">
+              <b-col >
+               <input  style=" background-color:#49a0b5; margin-bottom:20px; border:1px solid #49a0b5" v-on:click="modalExpenses = !modalExpenses" value="Nouvelle dépense"  type="submit" class="btn btn-primary center" />
+              </b-col>
+              <template>
+                        <b-modal v-model="modalExpenses" title="Associer une dépense ?"
+                           :header-bg-variant="headerBgVariant"
+                           :header-text-variant="headerTextVariant"
+                           :body-bg-variant="bodyBgVariant"
+                           :body-text-variant="bodyTextVariant"
+                           :footer-bg-variant="footerBgVariant"
+                           :footer-text-variant="footerTextVariant">
+                           <b-container fluid>
+                              <b-row class="mb-1">
+                                 <b-col cols="5">Montant</b-col>
+                                 <b-col><input type="number" v-model="expense.amount" required placeholder="00,00" style="width:90%"></b-col>
+                              </b-row>
+                              <b-row class="mb-1">
+                                 <b-col cols="5">Un commentaire ?</b-col>
+                                 <b-col><input type="text" v-model="expense.description" name="description" id="description_field" value="" required placeholder="blablabla" style="width:90%"></b-col>
+                              </b-row>
+                              <b-row class="mb-1">
+                                 <b-col cols="5">Qui participe ?</b-col>
+                              </b-row>
+                              <b-row class="mb-1">
+                                 <b-col  v-for="member in family_members" style="text-align:center">
+                                    <span id="checkboxes_buyer">
+                                    <input v-model="expense.contributors" v-bind:value="member.id" v-bind:id="member.id" type="checkbox" /> <label v-bind:for="member.id" ><span><img v-bind:src="member.image_url"><br></span><span>${ member.username }</span>  <i id="is_contributor_icon" class="fa fa-check fa" aria-hidden="true"></i></label>
+                                    </span>
+                                 </b-col>
+                              </b-row>
+                           </b-container>
+                           <div slot="modal-footer" class="w-100">
+                              <p v-if="this.wish_expense != null" class="float-left">Ceci est une dépense pour un(e) ${ this.wish_expense.description }. </p>
+                              <b-btn style="cursor:pointer" size="sm" class="float-left" variant="danger" @click="modalShow = !modalShow">
+                                 Non merci, pas de dépense
+                              </b-btn>
+                              <b-btn style="cursor:pointer" size="sm" class="float-right" variant="primary" @click="addExpense">
+                                 Ajouter une dépense
+                              </b-btn>
+                           </div>
+                        </b-modal>
+                     </template>
+                     </span>
+            </b-row>
+            <b-row>
+                <div id="table_account">
+                    <b-table  striped hover :items="expenses" :fields="fields" >
+                        <template slot="wish"  scope="data">
+                          <span v-if="!data.item.is_wish_owner" > <span v-if="data.item.wish">${ data.item.wish } pour ${ data.item.wish_author }</span></span>
+                          <span  v-else> <b-badge pill  variant="info">${ data.christmas_date | moment } ☺️ </b-badge></span>
+                        </template>
+                        <template slot="description"  scope="data">
+                          <span v-if="!data.item.is_wish_owner" >${ data.item.description }</span>
+                          <span  v-else> <b-badge pill style="color:#17a2b8"  variant="info"> Ceci est caché </b-badge></span>
+                        </template>
+                        <template slot="amount"  scope="data">
+                          <span v-if="!data.item.is_wish_owner" >${ data.item.amount }</span>
+                          <span  v-else> 🤑</span>
+                        </template>
+                        <template slot="action"  scope="data">
+                          <span v-on:click="removeExpense(data.index, data.item.id)" ><i style="cursor:pointer"  class="fa fa-trash-o fa-2x" aria-hidden="true"></i></span>
+                        </template>
+                    </b-table>
+                    
+
+                    
+                </div>
+            </b-row>
+        </b-container>
+         <b-container>
+            <b-row style="text-align:center">
+            <span id="repartition">
+              <b-col >
+               <input  style=" background-color:#49a0b5; margin-bottom:20px; border:1px solid #49a0b5" v-on:click="getRepartition" value="Voir la répartition"  type="submit" class="btn btn-primary center" />            
+                    <div v-for="(expense, index) in expenses">
+                    ${expense.sender} doit ${expense.amount}€ à ${expense.receiver}<br>
+                  </div>
+                </b-col>
+
+                <div id="chartContainer" style="height: 370px; max-width: 920px; margin: 0px auto;"></div>
+                
+        </b-container>
+               
+           
+      </div>
+    </div>
+</div>
+{% endblock %}
+{% block javascripts %}
+<script src="{{ asset('js/moment.js') }}"></script>
+
+<script>
+   moment.locale('fr', {
+   months : 'janvier_février_mars_avril_mai_juin_juillet_août_septembre_octobre_novembre_décembre'.split('_'),
+   monthsShort : 'janv._févr._mars_avr._mai_juin_juil._août_sept._oct._nov._déc.'.split('_'),
+   monthsParseExact : true,
+   weekdays : 'dimanche_lundi_mardi_mercredi_jeudi_vendredi_samedi'.split('_'),
+   weekdaysShort : 'dim._lun._mar._mer._jeu._ven._sam.'.split('_'),
+   weekdaysMin : 'Di_Lu_Ma_Me_Je_Ve_Sa'.split('_'),
+   weekdaysParseExact : true,
+   longDateFormat : {
+     LT : 'HH:mm',
+     LTS : 'HH:mm:ss',
+     L : 'DD/MM/YYYY',
+     LL : 'D MMMM YYYY',
+     LLL : 'D MMMM YYYY HH:mm',
+     LLLL : 'dddd D MMMM YYYY HH:mm'
+   },
+   calendar : {
+     sameDay : '[Aujourd’hui à] LT',
+     nextDay : '[Demain à] LT',
+     nextWeek : 'dddd [à] LT',
+     lastDay : '[Hier à] LT',
+     lastWeek : 'dddd [dernier à] LT',
+     sameElse : 'L'
+   },
+   relativeTime : {
+     future : 'dans %s',
+     past : 'il y a %s',
+     s : 'quelques secondes',
+     m : 'une minute',
+     mm : '%d minutes',
+     h : 'une heure',
+     hh : '%d heures',
+     d : 'un jour',
+     dd : '%d jours',
+     M : 'un mois',
+     MM : '%d mois',
+     y : 'un an',
+     yy : '%d ans'
+   },
+   dayOfMonthOrdinalParse : /\d{1,2}(er|e)/,
+   ordinal : function (number) {
+     return number + (number === 1 ? 'er' : 'e');
+   },
+   meridiemParse : /PD|MD/,
+   isPM : function (input) {
+     return input.charAt(0) === 'M';
+   },
+   // In case the meridiem units are not separated around 12, then implement
+   // this function (look at locale/id.js for an example).
+   // meridiemHour : function (hour, meridiem) {
+   //     return /* 0-23 hour, given meridiem token and hour 1-12 */ ;
+   // },
+   meridiem : function (hours, minutes, isLower) {
+     return hours < 12 ? 'PD' : 'MD';
+   },
+   week : {
+     dow : 1, // Monday is the first day of the week.
+     doy : 4  // The week that contains Jan 4th is the first week of the year.
+   }
+   });
+   
+</script>
+<script>
+var expenses = new Vue({
+   delimiters: ['${', '}'],
+   el: '#expenses_popin',
+   data: {
+     modalExpenses: false,
+     variants: [
+         'primary','secondary','success','warning','danger','info','light','dark'
+        ],
+     headerBgVariant: 'info',
+     headerTextVariant: 'light',
+     bodyBgVariant: 'light',
+     bodyTextVariant: 'dark',
+     footerBgVariant: 'dark',
+     footerTextVariant: 'light',
+     expense: {description: '', amount:0, contributors:[]},
+    family_members: [{% for member in family_members_admin %} { username: '{{ member.username }}', id: '{{ member.id }}' , image_url:'{{ asset("upload/user/"~ member.ImageName ) }}'}{% if loop.last == false %},{% endif %}{% endfor %}],
+
+
+   }, 
+
+   methods: {
+    addExpense: function () { 
+     $.ajax({
+         type: "POST",
+         url: "{{ path('addExpense')}}",
+         data: {amount : this.expense.amount, comment: this.expense.description, contributors:this.expense.contributors, wish: null},
+         cache: false,
+         success: function(result){
+           table_account.expenses.push(
+              {
+                id: result[0].id,
+                author: result[0].author,
+                date: result[0].date,
+                description: result[0].description,
+                amount: result[0].amount,
+              }
+             );
+           this.expense.amount = null;
+           this.expense.description = null;
+          this.expense.contributors = [];
+          this.modalExpenses = !this.modalExpenses;
+          
+          toastr.info("Dépense ajoutée ! 💸");
+
+   
+         }.bind(this),
+         error : function(resultat, statut, erreur){
+          toastr.error("Oups, une erreur s'est produite 😩");
+        }
+     }); 
+   },
+
+   },
+   
+});
+
+var repartitions = new Vue({
+   delimiters: ['${', '}'],
+   el: '#repartition',
+   data: {
+      expenses: [
+      
+       ],
+   },
+   methods:{
+       getRepartition: function() {
+      $.ajax({
+         type: "POST",
+         url: "{{ path('expensesRepartition', {event: 1})}}",
+         data: {},
+         cache: false,
+         success: function(result){
+           result.forEach(function(element) {
+            repartitions.expenses.push(
+              {
+                receiver: element.receiver,
+                sender: element.sender,
+                amount: element.amount,
+                
+              }
+             );
+          });
+                      
+        }.bind(this),
+         error : function(resultat, statut, erreur){
+          toastr.error("Oups, une erreur s'est produite 😩");
+
+           
+        }
+     });
+      }
+   }
+});
+
+
+
+var table_account = new Vue({
+   delimiters: ['${', '}'],
+   el: '#table_account',
+   data: {
+     repartition:[],
+     expenses: [
+       
+         {% for test in expenses %}
+          {% for expense in test %}
+            {id:'{{ expense.id}}',
+            author_id:'{{ expense.author.id}}',
+            author:'{{ expense.author.username}}',
+            {% if expense.wish %} wish_author:'{{expense.wish.author.username}}',
+            wish_id:'{{ expense.wish.id}}',
+            wish:'{{ expense.wish.description}}',
+            is_wish_owner: {% if expense.wish.author == app.user %}true{% else %}false{% endif %},
+            {% else  %}
+            is_wish_owner: false,
+            {% endif  %}
+            description:'{{expense.description}}',
+            amount:'{{expense.amount}}',
+            
+            date:'{{expense.date|date("d/m/Y")}}'},
+            
+
+        {% endfor %}
+        
+        {% endfor %}
+      
+     ],
+     fields: [
+       {
+         key: 'author',
+         label: 'Payeur',
+         sortable: true,
+         'class': 'text-center'
+         
+       },
+       {
+         key: 'wish',
+         sortable: false,
+         label: 'Cadeau',
+         'class': 'text-center'
+       },
+       {
+         key: 'description',
+         label: 'Commentaire',
+         sortable: false,
+         'class': 'text-center'
+         
+       },
+       {
+         key: 'amount',
+         label: 'Montant',
+         sortable: true,
+         'class': 'text-center'
+       },
+       {
+         key: 'date',
+         label: 'Date',
+         sortable: false,
+         'class': 'text-center'  
+       },
+
+       {
+         key: 'action',
+         label: 'Action',
+         sortable: false,
+         'class': 'text-center'  
+       },
+   
+     ],
+     family_members: [{% for member in family_members %} { username: '{{ member.username }}', id: '{{ member.id }}' , image_url:'{{ asset("upload/user/"~ member.ImageName ) }}'}{% if loop.last == false %},{% endif %}{% endfor %}],
+     editedWish: null,
+     editedWish_url: null,
+     is_owner: {% if user == app.user %}true{% else %}false{% endif %},
+     user: '{{ app.user.username }}',
+     modalShow: false,
+     variants: [
+         'primary','secondary','success','warning','danger','info','light','dark'
+        ],
+     headerBgVariant: 'info',
+     headerTextVariant: 'light',
+     bodyBgVariant: 'light',
+     bodyTextVariant: 'dark',
+     footerBgVariant: 'dark',
+     footerTextVariant: 'light',
+     expense: {description: '', amount:0, contributors:[]},
+     wish_expense:null,
+     repartition: null,
+     
+   
+   },
+   filters: {
+     moment: function (date) {
+         var day = moment("Dec 25, 2017");
+       return moment(day).startOf('minute').fromNow();
+     }
+     },
+   methods: {
+       removeExpense: function (index, id) {
+     $.ajax({
+         type: "POST",
+         url: "{{ path('removeExpense')}}",
+         data: {id : id},
+         cache: false,
+         success: function(result){
+           this.expenses.splice(index, 1);
+          toastr.info("Tes désirs sont des ordres. La dépense a bien été supprimé 👌");
+
+         }.bind(this),
+         error : function(resultat, statut, erreur){
+          toastr.error("Oups, une erreur s'est produite 😩");
+
+           
+        }
+     });
+   },
+  
+   }
+});
+</script>
+<script>
+
+</script>
+<script>
+
+var chart = null;
+var dataPoints = [];
+
+
+chart = new CanvasJS.Chart("chartContainer", {
+	animationEnabled: true,
+	theme: "light2",
+	title: {
+		text: "Compte rendu des dépenses"
+	},
+	axisY: {
+		title: "€",
+		titleFontSize: 24
+	},
+	data: [{
+		type: "column",
+		yValueFormatString: "#,### €",
+		dataPoints: dataPoints
+	}]
+});
+
+
+$.getJSON("{{ path('expensesResume', {event: 1}) }}", callback);
+
+
+
+function callback(data) {	
+	for (var i = 0; i < data.dps.length; i++) {
+    if(data.dps[i].amount != 0){
+		dataPoints.push({
+			label: data.dps[i].name,
+			y: data.dps[i].amount
+		});
+	}}
+
+	chart.render(); 
+}
+</script>
+{% endblock %}

@@ -1,0 +1,473 @@
+<?php
+
+namespace UserBundle\Entity;
+
+// src/AppBundle/Entity/User.php
+
+use FOS\UserBundle\Model\User as BaseUser;
+use Doctrine\ORM\Mapping as ORM;
+
+use Symfony\Component\HttpFoundation\File\File;
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
+use Symfony\Component\Validator\Constraints as Assert;
+
+/**
+ * User
+ *
+ * @ORM\Table(name="user")
+  * @Vich\Uploadable
+ * @ORM\Entity(repositoryClass="UserBundle\Repository\UserRepository")
+ */
+class User extends BaseUser
+{
+     /**
+     * @ORM\Id
+     * @ORM\Column(type="string")
+     * @ORM\GeneratedValue(strategy="UUID")
+     */
+     protected $id;
+
+    /**
+    * @ORM\Column(type="string", length=255)
+    *
+    * @var string
+    */
+    private $firstname;
+
+    /**
+    * @ORM\Column(type="string", length=255)
+    *
+    * @var string
+    */
+    private $lastname;
+
+    /**
+    * @ORM\Column(type="string", length=255, nullable=true)
+    *
+    * @var string
+    */
+    private $phone;
+
+        /**
+    * @ORM\Column(type="string", length=255, nullable=true)
+    *
+    * @var string
+    */
+    private $phone_home;
+
+    /**
+     * @ORM\ManyToMany(targetEntity="UserBundle\Entity\Address", inversedBy="users")
+     * @ORM\JoinTable(name="users_addresses")
+     */
+    private $addresses;
+
+    /**
+     * @ORM\ManyToMany(targetEntity="UserBundle\Entity\Family", inversedBy="members")
+     * @ORM\JoinTable(name="family_members")
+     */
+     private $families;
+
+    /**
+    * @ORM\ManyToMany(targetEntity="AccountingBundle\Entity\Expense", mappedBy="contributors")
+    */
+    private $expenses;
+
+     /**
+     * 
+     * @Vich\UploadableField(mapping="imageFile", fileNameProperty="imageName")
+     * 
+     * @var File
+     */
+     private $imageFile;
+     
+         /**
+          * @ORM\Column(type="string", length=255, nullable=true)
+          *
+          * @var string
+          */
+         private $imageName;
+     
+         /**
+          * @ORM\Column(type="datetime", nullable=true)
+          *
+          * @var \DateTime
+          */
+         private $updatedAt;
+     
+    /**
+    * @ORM\Column(type="datetime", nullable=true)
+    *
+    * @var \DateTime
+    */
+    private $birthday;
+
+    /**
+    * @var bool
+    *
+    * @ORM\Column(name="isChild", type="boolean")
+    */
+    private $isChild;
+
+    /**
+    * @ORM\OneToMany(targetEntity="NotifBundle\Entity\Authorization", mappedBy="owner")
+    */
+    protected $authorizations;
+
+    /**
+    * @ORM\OneToMany(targetEntity="NotifBundle\Entity\Notification", mappedBy="owner")
+    */
+    protected $notifications;
+    
+
+
+    /**
+     * @param File|\Symfony\Component\HttpFoundation\File\UploadedFile $image
+     *
+     * @return user
+     */
+     public function setImageFile(File $imageFile = null)
+     {
+         $this->imageFile = $imageFile;
+ 
+         return $this;
+     }
+ 
+     /**
+      * @return File
+      */
+     public function getImageFile()
+     {
+         return $this->imageFile;
+     }
+
+
+
+    public function getId()
+    {
+        return $this->id;
+    }
+     
+         public function __construct()
+         {
+             parent::__construct();
+             // your own logic
+         }
+
+    /**
+     * Add address
+     *
+     * @param \UserBundle\Entity\Address $address
+     *
+     * @return User
+     */
+    public function addAddress(\UserBundle\Entity\Address $address)
+    {
+        $this->addresses[] = $address;
+
+        return $this;
+    }
+
+    /**
+     * Remove address
+     *
+     * @param \UserBundle\Entity\Address $address
+     */
+    public function removeAddress(\UserBundle\Entity\Address $address)
+    {
+        $this->addresses->removeElement($address);
+    }
+
+    /**
+     * Get addresses
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getAddresses()
+    {
+        return $this->addresses;
+    }
+
+    /**
+     * Add family
+     *
+     * @param \UserBundle\Entity\Family $family
+     *
+     * @return User
+     */
+    public function addFamily(\UserBundle\Entity\Family $family)
+    {
+        $this->families[] = $family;
+
+        return $this;
+    }
+
+    /**
+     * Remove family
+     *
+     * @param \UserBundle\Entity\Family $family
+     */
+    public function removeFamily(\UserBundle\Entity\Family $family)
+    {
+        $this->families->removeElement($family);
+    }
+
+    /**
+     * Get families
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getFamilies()
+    {
+        return $this->families;
+    }
+
+    /**
+     * Set imageName
+     *
+     * @param string $imageName
+     *
+     * @return User
+     */
+    public function setImageName($imageName)
+    {
+        $this->imageName = $imageName;
+
+        return $this;
+    }
+
+    /**
+     * Get imageName
+     *
+     * @return string
+     */
+    public function getImageName()
+    {
+        return $this->imageName;
+    }
+
+    /**
+     * Set updatedAt
+     *
+     * @param \DateTime $updatedAt
+     *
+     * @return User
+     */
+    public function setUpdatedAt($updatedAt)
+    {
+        $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    /**
+     * Get updatedAt
+     *
+     * @return \DateTime
+     */
+    public function getUpdatedAt()
+    {
+        return $this->updatedAt;
+    }
+
+    /**
+     * Add expense
+     *
+     * @param \AccountingBundle\Entity\Expense $expense
+     *
+     * @return User
+     */
+    public function addExpense(\AccountingBundle\Entity\Expense $expense)
+    {
+        $this->expenses[] = $expense;
+
+        return $this;
+    }
+
+    /**
+     * Remove expense
+     *
+     * @param \AccountingBundle\Entity\Expense $expense
+     */
+    public function removeExpense(\AccountingBundle\Entity\Expense $expense)
+    {
+        $this->expenses->removeElement($expense);
+    }
+
+    /**
+     * Get expenses
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getExpenses()
+    {
+        return $this->expenses;
+    }
+
+    /**
+     * Set firstname
+     *
+     * @param string $firstname
+     *
+     * @return User
+     */
+    public function setFirstname($firstname)
+    {
+        $this->firstname = $firstname;
+
+        return $this;
+    }
+
+    /**
+     * Get firstname
+     *
+     * @return string
+     */
+    public function getFirstname()
+    {
+        return $this->firstname;
+    }
+
+    /**
+     * Set lastname
+     *
+     * @param string $lastname
+     *
+     * @return User
+     */
+    public function setLastname($lastname)
+    {
+        $this->lastname = $lastname;
+
+        return $this;
+    }
+
+    /**
+     * Get lastname
+     *
+     * @return string
+     */
+    public function getLastname()
+    {
+        return $this->lastname;
+    }
+
+    /**
+     * Set phone
+     *
+     * @param string $phone
+     *
+     * @return User
+     */
+    public function setPhone($phone)
+    {
+        $this->phone = $phone;
+
+        return $this;
+    }
+
+    /**
+     * Get phone
+     *
+     * @return string
+     */
+    public function getPhone()
+    {
+        return $this->phone;
+    }
+
+    /**
+     * Set phoneHome
+     *
+     * @param string $phoneHome
+     *
+     * @return User
+     */
+    public function setPhoneHome($phoneHome)
+    {
+        $this->phone_home = $phoneHome;
+
+        return $this;
+    }
+
+    /**
+     * Get phoneHome
+     *
+     * @return string
+     */
+    public function getPhoneHome()
+    {
+        return $this->phone_home;
+    }
+
+    /**
+     * Set idChild
+     *
+     * @param boolean $idChild
+     *
+     * @return User
+     */
+    public function setIdChild($idChild)
+    {
+        $this->idChild = $idChild;
+
+        return $this;
+    }
+
+    /**
+     * Get idChild
+     *
+     * @return boolean
+     */
+    public function getIdChild()
+    {
+        return $this->idChild;
+    }
+
+    /**
+     * Set isChild
+     *
+     * @param boolean $isChild
+     *
+     * @return User
+     */
+    public function setIsChild($isChild)
+    {
+        $this->isChild = $isChild;
+
+        return $this;
+    }
+
+    /**
+     * Get isChild
+     *
+     * @return boolean
+     */
+    public function getIsChild()
+    {
+        return $this->isChild;
+    }
+
+    /**
+     * Set birthday
+     *
+     * @param \DateTime $birthday
+     *
+     * @return User
+     */
+    public function setBirthday($birthday)
+    {
+        $this->birthday = $birthday;
+
+        return $this;
+    }
+
+    /**
+     * Get birthday
+     *
+     * @return \DateTime
+     */
+    public function getBirthday()
+    {
+        return $this->birthday;
+    }
+}

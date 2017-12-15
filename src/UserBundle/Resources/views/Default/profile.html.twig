@@ -1,0 +1,523 @@
+{% extends 'base.html.twig' %}
+{% block stylesheets %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
+<link type="text/css" rel="stylesheet" href="{{ asset('css/expensesList.css') }}"/>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js" type="text/javascript"></script> 
+<link href="{{ asset('js/toastr/build/toastr.css') }}" rel="stylesheet"/>
+<script src="{{ asset('js/toastr/toastr.js') }}"></script>
+
+
+{% endblock %}
+{% block body %}
+
+<div class="container">
+   <div class="row">
+        <div id="container_table">
+            <b-container>
+                <b-row>
+                    <b-col>
+                        <b-card border-variant="light"
+                                header="Photo"
+                                class="text-center">
+                            <img src="{{ asset("upload/user/"~ user.ImageName ) }}" style="max-height:200px;height:50%">
+                            <div v-show ="!is_upload" style="margin-top:20px;">
+                                 <b-button variant="info" @click="openUpload">Charger une nouvelle photo</b-button>
+                            </div>
+                            <div v-show="is_upload" style="margin-top:20px;">
+                           {{ form_start(form, {'attr': { 'class': '' } }) }}
+                           
+                                    {{ form_widget(form.imageFile, {'attr': {'class': ''}}) }}
+                                   
+                                    <input style="margin-top:20px; background-color:#49a0b5; border:1px solid #49a0b5" type="submit" value="Valider" class="btn btn-primary" />
+                                    <input style="margin-top:20px; max-width:18%;background-color:red; border:1px solid red" @click="is_upload = !is_upload"  value="Annuler" class="btn btn-primary" />
+
+                            {{ form_end(form) }}
+                            </div>
+                        </b-card>
+                    </b-col>
+                    <b-col>
+                        <b-card border-variant="light"
+                                header="Info"
+                                align="center">
+                        <p class="card-text">
+                            
+                            <b-row >
+                                <b-col>
+                                    <b-input-group  left="<i class='fa fa-user' aria-hidden='true'></i>" >
+                                        <b-form-input v-model="firstname"></b-form-input><b-form-input style="margin-left:5px;" v-model="lastname"></b-form-input>
+                                    </b-input-group>
+                                </b-col>
+                            </b-row>
+                            <b-row style="margin-top:30px;">
+                                <b-col>
+                                    <b-input-group left="@" >
+                                        <b-form-input v-model="email"></b-form-input>
+                                    </b-input-group>
+                                </b-col>
+                            </b-row>
+                            <b-row style="margin-top:30px;">
+                                <b-col>
+                                     <b-input-group left="<i class='fa fa-mobile' aria-hidden='true'></i>" >
+                                        <b-form-input v-model="phone" placeholder="0602030405"></b-form-input>
+                                    </b-input-group>
+                                </b-col>
+                            </b-row>
+                            <b-row style="margin-top:30px;">
+                                <b-col>
+                                    <b-input-group left="<i class='fa fa-phone' aria-hidden='true'></i>" >
+                                        <b-form-input v-model="phone_home" placeholder="0102030405"></b-form-input>
+                                    </b-input-group>
+                                </b-col>
+                            </b-row>
+                            <b-row style="margin-top:30px;">
+                                <b-col>
+                                    <b-input-group left="<i class='fa fa-birthday-cake' aria-hidden='true'></i>" >
+                                        <b-form-input v-model="birthday" v-type="date" placeholder="01/01/1990"></b-form-input>
+                                    </b-input-group>
+                                </b-col>
+                            </b-row>
+                            <b-row style="margin-top:30px;">
+                                <b-col>
+                                   <b-button variant="info" @click="editProfile">Valider</b-button>
+                                </b-col>
+                            </b-row>
+                        </p>
+                        </b-card>
+                    </b-col>
+                     <b-col>
+                        <b-card border-variant="light"
+                                header="Autorisations"
+                                class="text-center">
+                            <div v-for="(authorization, index) in authorizations">
+                                <b-form-checkbox v-model="authorization.isAuthorized" value="authorization.isAuthorized" @change="changeAuthorization(index, authorization.id)" >Notification ${authorization.type}</b-form-checkbox>
+                            </div>
+                        </b-card>
+                    </b-col>
+                </b-row>
+                <b-row style="margin-top:30px;">
+                    <b-col>
+                        <b-card   border-variant="light"
+                                header="Adresse"
+                                align="center"
+                                style="margin-bottom:10px;">
+                        <b-button variant="info" @click="openAddAddress">Ajouter</b-button>
+                        <p class="card-text" v-if="isAddressOpen">
+                            <b-row style="margin-top:30px;">
+                                <b-col>
+                                    <b-input-group left="<i class='fa fa-home' aria-hidden='true'></i>" >
+                                        <b-form-input  v-model="newAddress.street" placeholder="Numéro et rue" ></b-form-input>
+                                    </b-input-group>
+                                </b-col>
+                            </b-row>
+                            <b-row style="margin-top:30px;" >
+                                <b-col>
+                                    <b-input-group left="<i class='fa fa-plus' aria-hidden='true'></i>" >
+                                        <b-form-input v-model="newAddress.details" placeholder="Détails"></b-form-input>
+                                    </b-input-group>
+                                </b-col>
+                            </b-row>
+                            <b-row style="margin-top:30px;">
+                                <b-col>
+                                    <b-input-group left="<i class='fa fa-building' aria-hidden='true'></i>" >
+                                        <b-form-input v-model="newAddress.zipcode" placeholder="Code postal"> </b-form-input><b-form-input style="margin-left:5px;" placeholder="Ville" v-model="newAddress.city"></b-form-input>
+                                    </b-input-group>
+                                </b-col>
+                            </b-row>
+                            <b-row style="margin-top:30px;">
+                                <b-col>
+                                     <b-button variant="info" @click="addAddress">Valider</b-button>
+                                </b-col>
+                                <b-col>
+                                     <b-button variant="danger" @click="openAddAddress">Annuler</b-button>
+                                </b-col>
+                            </b-row>
+                            
+                        </p>
+                        <p class="card-text" v-for="(address, index) in addresses">
+                            <b-row style="margin-top:30px;">
+                                <b-col>
+                                    <b-input-group left="<i class='fa fa-home' aria-hidden='true'></i>" >
+                                        <b-form-input v-model="address.street" ></b-form-input>
+                                    </b-input-group>
+                                </b-col>
+                            </b-row>
+                            <b-row style="margin-top:30px;" v-if="address.details">
+                                <b-col>
+                                    <b-input-group left="<i class='fa fa-plus' aria-hidden='true'></i>" >
+                                        <b-form-input v-model="address.details"></b-form-input>
+                                    </b-input-group>
+                                </b-col>
+                            </b-row>
+                            <b-row style="margin-top:30px;">
+                                <b-col>
+                                    <b-input-group left="<i class='fa fa-building' aria-hidden='true'></i>" >
+                                        <b-form-input v-model="address.zipcode"></b-form-input><b-form-input style="margin-left:5px;" v-model="address.city"></b-form-input>
+                                    </b-input-group>
+                                </b-col>
+                            </b-row>
+                            <b-row style="margin-top:30px;">
+                                <b-col>
+                                     <b-button variant="info" @click="editAddress(index)">Editer</b-button>
+                                </b-col>
+                                <b-col>
+                                     <b-button variant="danger" @click="removeAddress(index)">Supprimer</b-button>
+                                </b-col>
+                            </b-row>
+                        </p>
+                        </b-card>
+                    </b-col>
+                    
+                </b-row>
+                <b-row>
+                    <b-col>
+                        <b-card border-variant="light"
+                                        header="Mes familles"
+                                        class="text-center">
+                        <b-container>
+                            
+                            <b-row style="margin-bottom:20px;">
+                                <b-col>
+                                    <b-input-group>
+                                        <b-form-input v-model="newFamilyName"  placeholder="Nom de la famille"></b-form-input>
+                                            <b-input-group-button>
+                                                <b-btn variant="success" @click="newFamily">Créer une nouvelle famille</b-btn>
+                                            </b-input-group-button>
+                                    </b-input-group>
+                                    
+                                </b-col>
+                            </b-row>
+                            <b-row>
+                                <b-col v-for="family in families">
+                                    <b-card bg-variant="info"
+                                            text-variant="white"
+                                            header="family.name"
+                                            class="text-center"
+                                            style="padding-right:0;padding-left:0;">
+                                             
+                                             <a v-for="(member, index) in family.members" :href="member.link">
+                                                <div style="padding:0px;width:100%;height:60px;background-color:white; margin-bottom:2px;" class="card-text">
+                                                    <b-container>
+                                                        <b-row>
+                                                            <b-col cols="2">
+                                                                    <img :src="member.image" style="height:60px;width:100%">                                 
+                                                            </b-col>
+                                                            <b-col cols="7" style="text-align:left; ">
+                                                                ${member.firstname} ${member.lastname}                                               
+                                                            </b-col>
+                                                            
+                                                            <b-col v-if="family.admin == user" style="text-align:right; ">
+                                                                <i style="color:red; cursor:pointer" class="fa fa-remove fa-2x" aria-hidden="true"  @click="setIsChild(member.id, index)"></i>
+                                                            </b-col>
+                                                        </b-row>
+                                                    </b-container>
+                                                </div>
+                                            </a>
+                                           
+                                            <div v-for="(ongoingInvit, index) in ongoingInvit" v-if="ongoingInvit.family == family.id" style="padding:0px;width:100%;height:60px;background-color:white; margin-bottom:2px;" class="card-text">
+                                                    <b-container>
+                                                        <b-row>
+                                                            <b-col cols="2">
+                                                                    <img src="{{ asset('img/hourglass.png' ) }}" style="height:60px;width:100%">                                 
+                                                            </b-col>
+                                                            <b-col cols="7" style="text-align:left;color:#49A0B5 ">
+                                                                ${ ongoingInvit.email }                                                
+                                                            </b-col>
+                                                            <b-col  style="text-align:right;height:100%;  ">
+                                                                <i style="color:red; cursor:pointer" class="fa fa-remove fa-2x" aria-hidden="true"  @click="removeInvit(ongoingInvit.id, index)"></i>
+                                                                <i style="color:#49A0B5 ;cursor:pointer" class="fa fa-share fa-2x" aria-hidden="true"  @click="reSendInvit(ongoingInvit.id)"></i>
+                                                            </b-col>
+                                                        </b-row>
+                                                    </b-container>
+                                            </div>
+
+                                           
+                                            
+                                            
+                                            <b-container style="margin-top:20px;">
+                                                <b-row>
+                                                    <b-col>
+                                                      <b-button v-if="!isNewMemberOpen"  variant="info" @click="openAddMember">Inviter un membre</b-button>
+                                                      <span  v-else>
+                                                      <b-input-group left="@" aria-hidden='true'></i>
+                                                            <b-form-input v-model="guestEmail"></b-form-input>
+                                                        </b-input-group>
+                                                        <b-button style="margin-top:10px;" variant="info" @click="sendInvit(family.id)">Envoyer l'invitation</b-button>
+                                                        </span>
+                                                    </b-col>
+                                                </b-row>
+                                             </b-container>
+                                    </b-card>
+                                </b-col>
+                            </b-row>
+                        </b-container>
+                        </b-card>
+                    </b-col>
+                </b-row>
+            </b-container>
+        </div>
+   </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+<script src="{{ asset('js/moment.js') }}"></script>
+<script>
+var container_table = new Vue({
+   delimiters: ['${', '}'],
+   el: '#container_table',
+   data: {
+       is_owner: {% if user == app.user %}true{% else %}false{% endif %},
+       firstname: '{{user.firstname}}',
+       lastname: '{{user.lastname}}',
+       phone: '{{user.phone}}',
+       phone_home: '{{user.phoneHome}}',
+       email: '{{user.email}}',
+       birthday: '{{ user.birthday|date("d/m/Y") }}',
+       addresses: [
+            {% for address in user.addresses %} 
+                {
+                    id: '{{address.id}}',
+                    street: '{{address.street}}',
+                    details: '{{address.details}}',
+                    zipcode: '{{address.zipcode}}',
+                    city: '{{address.city}}',
+                }{% if loop.last == false %},{% endif %}
+            {% endfor %} 
+        ],
+        authorizations: [
+             {% for authorization in authorizations %} 
+                {
+                    id: '{{authorization.id}}',
+                    type: '{{authorization.type}}',
+                    isAuthorized: '{{authorization.isAuthorized}}',
+                }
+            {% endfor %} 
+        ],
+        is_upload: false,
+        isAddressOpen: false,
+        newFamilyName:null,
+        newAddress: 
+                {
+                    id: null,
+                    street: null,
+                    details: null,
+                    zipcode: null,
+                    city: null,
+                },
+        guestEmail:null,
+        isNewMemberOpen: false,
+        ongoingInvit: [
+            {% for family in invitation_pending %} 
+                {% for invitation in family %}
+                { 
+                email:'{{ invitation.receiver }}',
+                id: '{{ invitation.id }}',
+                family: '{{invitation.family.id}}',
+                },
+                {% endfor %}
+            {% endfor %}
+        ],
+        families: [
+            {% for family in families %}
+            {
+                name:'{{family.name}}',
+                id:'{{family.id}}',
+                members:[{% for member in family.members %}{
+                            image:'{{ asset("upload/user/"~ member.ImageName ) }}',
+                            firstname:' {{ member.firstname }}',
+                            lastname: '{{ member.lastname }}',
+                            link:"{{ path('viewProfile', {email: member.email}) }}",
+                },
+                    {% endfor %}
+                ],
+            }, 
+            {% endfor %}
+        ],
+
+   },
+   methods:{
+       changeAuthorization: function(index, id) {
+           console.log(id);
+           $.ajax({
+                type: "POST",
+                url: "{{ path('editAuthorization')}}",
+                data: {id: id},
+                cache: false,
+                success: function(result){
+                toastr.info('Informations bien enregistrés 🤓');                
+                }.bind(this),
+                error : function(resultat, statut, erreur){
+                alert("Une erreur s'est produite");
+                }
+            }); 
+       },
+
+        editProfile: function () {
+            $.ajax({
+                type: "POST",
+                url: "{{ path('editProfile')}}",
+                data: {firstname : this.firstname, lastname: this.lastname, phone: this.phone, phone_home: this.phone_home, email: this.email, birthday:this.birthday},
+                cache: false,
+                success: function(result){
+                
+                toastr.info('Informations bien enregistrés 🤓');
+
+                
+                }.bind(this),
+                error : function(resultat, statut, erreur){
+                alert("Une erreur s'est produite");
+                }
+            }); 
+        },
+        editAddress: function (index) {
+            $.ajax({
+                type: "POST",
+                url: "{{ path('editAddress')}}",
+                data: {id: this.addresses[index].id, street : this.addresses[index].street, details: this.addresses[index].details, city: this.addresses[index].city, zipcode: this.addresses[index].zipcode},
+                cache: false,
+                success: function(result){
+                
+                toastr.info('Adresse bien enregistrée 😏');
+
+                }.bind(this),
+                error : function(resultat, statut, erreur){
+                alert("Une erreur s'est produite");
+                }
+            }); 
+        },
+        removeAddress: function (index) {
+            $.ajax({
+                type: "POST",
+                url: "{{ path('removeAddress')}}",
+                data: {id: this.addresses[index].id},
+                cache: false,
+                success: function(result){
+                this.addresses.splice(index, 1);
+                toastr.info('Adresse bien supprimée 😏');
+
+                }.bind(this),
+                error : function(resultat, statut, erreur){
+                alert("Une erreur s'est produite");
+                }
+            }); 
+        },
+
+        openAddAddress: function () {
+            this.isAddressOpen = !this.isAddressOpen;
+        },
+        openAddMember: function () {
+            this.isNewMemberOpen = !this.isNewMemberOpen;
+        },
+        sendInvit: function (family) {
+            $.ajax({
+                type: "POST",
+                url: "{{ path('newInvit')}}",
+                data: {email: this.guestEmail, family_id: family },
+                cache: false,
+                success: function(result){
+                     this.ongoingInvit.push(
+                        {
+                            id: result.id,
+                            email: result.email,
+                            family: result.family,
+                           
+                        }
+                    );
+                toastr.info('Invitation bien envoyée 😏');
+                }.bind(this),
+                error : function(resultat, statut, erreur){
+                alert("Une erreur s'est produite");
+                }
+            }); 
+        },
+        removeInvit: function (id, index) {
+            $.ajax({
+                type: "POST",
+                url: "{{ path('removeInvit')}}",
+                data: {id: id },
+                cache: false,
+                success: function(){
+                    this.ongoingInvit.splice(index, 1);
+                    toastr.info('Invitation bien supprimée 😏');
+                }.bind(this),
+                error : function(resultat, statut, erreur){
+                alert("Une erreur s'est produite");
+                }
+            }); 
+        },
+
+        reSendInvit: function (id) {
+            $.ajax({
+                type: "POST",
+                url: "{{ path('reSendInvit')}}",
+                data: {id: id },
+                cache: false,
+                success: function(){
+
+                    toastr.info('Invitation bien renvoyée 😏');
+                }.bind(this),
+                error : function(resultat, statut, erreur){
+                alert("Une erreur s'est produite");
+                }
+            }); 
+        },
+
+        newFamily: function () {
+            $.ajax({
+                type: "POST",
+                url: "{{ path('newFamily')}}",
+                data: {name: this.newFamilyName },
+                cache: false,
+                success: function(result){
+                    toastr.info('Famille bien créée 😏');
+                }.bind(this),
+                error : function(resultat, statut, erreur){
+                alert("Une erreur s'est produite");
+                }
+            }); 
+        },
+        
+        addAddress: function () {
+            $.ajax({
+                type: "POST",
+                url: "{{ path('addAddress')}}",
+                data: {street: this.newAddress.street,details: this.newAddress.details, zipcode: this.newAddress.zipcode, city: this.newAddress.city },
+                cache: false,
+                success: function(result){
+                    this.addresses.push(
+                        {
+                            street: result[0].street,
+                            id: result[0].id,
+                            details: result[0].details,
+                            city: result[0].city,
+                            zipcode: result[0].zipcode,
+
+                        }
+                    );
+                toastr.info('Adresse bien ajoutée 😏');
+                this.newAddress.street = null,
+                this.newAddress.details = null,
+                this.newAddress.zipcode = null,
+                this.newAddress.city = null,
+                this.isAddressOpen = !this.isAddressOpen;
+
+                }.bind(this),
+                error : function(resultat, statut, erreur){
+                alert("Une erreur s'est produite");
+                }
+            }); 
+        },
+        openUpload: function() {
+            this.is_upload = !this.is_upload; 
+            document.getElementById('userbundle_user_imageFile_delete').checked = true;
+            document.getElementById('userbundle_user_imageFile_delete').style.display = 'none';
+            var $label = $("label[for='userbundle_user_imageFile_delete']");
+            $label.css('display', 'none');
+        }
+   }
+});
+</script>
+
+
+{% endblock %}

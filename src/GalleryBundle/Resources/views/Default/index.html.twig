@@ -1,0 +1,90 @@
+{% extends 'base.html.twig' %}
+{% block stylesheets %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js" type="text/javascript"></script> 
+
+<script src="{{ asset('js/canvasjs/jquery.canvasjs.min.js') }}"></script>
+<link type="text/css" rel="stylesheet" href="{{ asset('css/expensesList.css') }}"/>
+<style>
+</style>
+
+{% endblock %}
+{% block body %}
+<div class="container">
+   <div class="row">
+    <b-container>
+        <b-row style="margin-top:30px;">
+            <b-col v-for="photo in photos">
+             <img :src="photo.url">
+            </b-col> 
+        </b-row>
+    </b-container>
+   </div>
+</div>
+
+{% endblock %}
+{% block javascripts %}
+
+var container = new Vue({
+   delimiters: ['${', '}'],
+   el: '#container',
+   data: {
+       photos: [
+            {
+                name:'Photo1',
+                id:'1234',
+                url_small:'file:///Users/cypriengilbert/Documents/Web-server/familyt-API/familyt/web/img/map_ocso.png',
+                url_original:'file:///Users/cypriengilbert/Documents/Web-server/familyt-API/familyt/web/img/map_ocso.png'
+            }, 
+            {
+                name:'Photo1',
+                id:'1234',
+                url_small:'file:///Users/cypriengilbert/Documents/Web-server/familyt-API/familyt/web/img/map_ocso.png'
+                url_original:'file:///Users/cypriengilbert/Documents/Web-server/familyt-API/familyt/web/img/map_ocso.png'
+
+            }, 
+            {
+                name:'Photo1',
+                id:'1234',
+                url_small:'file:///Users/cypriengilbert/Documents/Web-server/familyt-API/familyt/web/img/map_ocso.png'
+                url_original:'file:///Users/cypriengilbert/Documents/Web-server/familyt-API/familyt/web/img/map_ocso.png'
+
+            }, 
+            {
+                name:'Photo1',
+                id:'1234',
+                url_small:'file:///Users/cypriengilbert/Documents/Web-server/familyt-API/familyt/web/img/map_ocso.png'
+                url_original:'file:///Users/cypriengilbert/Documents/Web-server/familyt-API/familyt/web/img/map_ocso.png'
+
+            }, 
+            {
+                name:'Photo1',
+                id:'1234',
+                url_small:'file:///Users/cypriengilbert/Documents/Web-server/familyt-API/familyt/web/img/map_ocso.png'
+                url_original:'file:///Users/cypriengilbert/Documents/Web-server/familyt-API/familyt/web/img/map_ocso.png'
+
+            }, 
+        ],
+   },
+   methods:{
+       openFullScreen:function() {
+
+       },
+       closeFullScreen: function() {
+
+       },
+       nextFullScreen: function() {
+
+       },
+       previousFullScreen: function() {
+
+       }
+       uploadImage: function() {
+
+       },
+       deleteImage: function() {
+           
+       }
+   }
+});
+
+{% endblock %}

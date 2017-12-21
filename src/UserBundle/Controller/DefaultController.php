@@ -58,7 +58,7 @@ class DefaultController extends Controller
         "user" => $this->getUser(),
          'families'=> $families, 
          'form'=>$form->createView(),
-         'nbNotif' => $$nbNotif,
+         'nbNotif' => $nbNotif,
          
         ));
         

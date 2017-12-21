@@ -1,0 +1,13 @@
+.members_details{
+    padding:0px;
+    width:100%;
+    height:60px;
+    background-color:#FFF;
+    margin-bottom:2px!important;
+    color:#49a0b5; 
+}
+
+.members_details a{
+    text-decoration:none;
+    color:#49a0b5; 
+}    

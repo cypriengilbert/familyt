@@ -40,6 +40,7 @@ class DefaultController extends Controller
 
             $this->sendInvitationMail($invit);
             
+  
 
             
             $arrayCollection = array(
@@ -197,7 +198,17 @@ class DefaultController extends Controller
 
      private function sendInvitationMail ($invit){
 
-        $message = \Swift_Message::newInstance()->setSubject($invit->getSender()->getFirstname().' vous invite à rejoindre sa famille sur Famil.yt !')->setFrom('admin@famil.yt')->setTo($invit->getReceiver())->setBody('Bonjour <br><br> Vous avez reçu une invitation de la part de '.$invit->getSender()->getFirstname().' pour rejoindre la famille '.$invit->getFamily()->getName().' sur Famil.yt <br><br> Pour accepter cette invitation, cliquez sur ce lien : <a href="gilbert.famil.yt/web/invitation/'.$invit->getId().'">accepter</a>', 'text/html');
+        $message = \Swift_Message::newInstance()
+        ->setSubject($invit->getSender()->getFirstname().' vous invite à rejoindre sa famille sur Famil.yt !')
+        ->setFrom('admin@famil.yt')
+        ->setTo($invit->getReceiver())
+        ->setBody($this->renderView('emails/invitation.html.twig', array(
+            'sender' => $invit->getSender(),
+            'family' => $invit->getFamily(),
+            'invit' => $invit,
+         )), 'text/html');
+
+         
         $this->get('mailer')->send($message);
      }
 

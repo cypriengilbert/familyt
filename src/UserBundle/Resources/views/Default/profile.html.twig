@@ -2,9 +2,14 @@
 {% block stylesheets %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
 <link type="text/css" rel="stylesheet" href="{{ asset('css/expensesList.css') }}"/>
+<link type="text/css" rel="stylesheet" href="{{ asset('css/profile.css') }}"/>
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js" type="text/javascript"></script> 
 <link href="{{ asset('js/toastr/build/toastr.css') }}" rel="stylesheet"/>
 <script src="{{ asset('js/toastr/toastr.js') }}"></script>
+<script src="https://unpkg.com/popper.js"></script>
+<script src="https://unpkg.com/v-tooltip"></script>
+
 
 
 {% endblock %}
@@ -89,7 +94,7 @@
                                 header="Autorisations"
                                 class="text-center">
                             <div v-for="(authorization, index) in authorizations">
-                                <b-form-checkbox v-model="authorization.isAuthorized" value="authorization.isAuthorized" @change="changeAuthorization(index, authorization.id)" >Notification ${authorization.type}</b-form-checkbox>
+                                <b-form-checkbox v-model="authorization.isAuthorized" :checked="1" @change="changeAuthorization(index, authorization.id)" >Notification ${authorization.type}</b-form-checkbox>
                             </div>
                         </b-card>
                     </b-col>
@@ -190,28 +195,58 @@
                                 <b-col v-for="family in families">
                                     <b-card bg-variant="info"
                                             text-variant="white"
-                                            header="family.name"
+                                            :header="family.name"
                                             class="text-center"
                                             style="padding-right:0;padding-left:0;">
                                              
-                                             <a v-for="(member, index) in family.members" :href="member.link">
-                                                <div style="padding:0px;width:100%;height:60px;background-color:white; margin-bottom:2px;" class="card-text">
+                                             <span v-for="(member, index) in family.members" >
+                                                <div  style="" class="members_details card-text">
                                                     <b-container>
                                                         <b-row>
-                                                            <b-col cols="2">
-                                                                    <img :src="member.image" style="height:60px;width:100%">                                 
-                                                            </b-col>
-                                                            <b-col cols="7" style="text-align:left; ">
-                                                                ${member.firstname} ${member.lastname}                                               
+                                                           
+                                                            <b-col cols="2" style="padding:0">
+                                                                <a :href="member.link">
+                                                                    <img :src="member.image" style="height:60px;width:100%">  
+                                                                </a>                               
                                                             </b-col>
                                                             
-                                                            <b-col v-if="family.admin == user" style="text-align:right; ">
-                                                                <i style="color:red; cursor:pointer" class="fa fa-remove fa-2x" aria-hidden="true"  @click="setIsChild(member.id, index)"></i>
+                                                            <b-col cols="7" style="text-align:left; margin-top:10px;">
+                                                                <a :href="member.link">
+                                                                    <b-container>
+                                                                        <b-row>
+                                                                            <b-col>
+                                                                                ${member.firstname}                                         
+                                                                            </b-col>
+                                                                        </b-row>
+                                                                        <b-row>
+                                                                            <b-col>
+                                                                                <span v-if="member.id == family.father">
+                                                                                    🧔
+                                                                                </span> 
+                                                                                <span v-if="member.id == family.mother">
+                                                                                    👩
+                                                                                </span>
+                                                                                <span v-if="member.isChild == true">
+                                                                                    👶
+                                                                                </span>                                          
+                                                                            </b-col>
+                                                                        </b-row>
+                                                                    </b-container>
+                                                                </a>
                                                             </b-col>
+                                                            
+                                                            
+                                                            <b-col v-if="family.admin == user_id" style="text-align:right; ">
+                                                                <i  v-tooltip="'test'" style="color:red; cursor:pointer" class="fa fa-child" aria-hidden="true"  @click="setIsChild(member.id, index)"></i>
+                                                                <i style=" cursor:pointer" class="fa fa-trash fa" aria-hidden="true"  @click="setIsChild(member.id, index)"></i>
+
+                                                            </b-col>
+
                                                         </b-row>
+                                                       
                                                     </b-container>
                                                 </div>
-                                            </a>
+                                            </span>
                                            
                                             <div v-for="(ongoingInvit, index) in ongoingInvit" v-if="ongoingInvit.family == family.id" style="padding:0px;width:100%;height:60px;background-color:white; margin-bottom:2px;" class="card-text">
                                                     <b-container>
@@ -219,7 +254,7 @@
                                                             <b-col cols="2">
                                                                     <img src="{{ asset('img/hourglass.png' ) }}" style="height:60px;width:100%">                                 
                                                             </b-col>
-                                                            <b-col cols="7" style="text-align:left;color:#49A0B5 ">
+                                                            <b-col cols="8" style="text-align:left;color:#49A0B5 ">
                                                                 ${ ongoingInvit.email }                                                
                                                             </b-col>
                                                             <b-col  style="text-align:right;height:100%;  ">
@@ -233,7 +268,7 @@
                                            
                                             
                                             
-                                            <b-container style="margin-top:20px;">
+                                            <b-container style="margin-top:20px;" v-if="family.admin == user_id">
                                                 <b-row>
                                                     <b-col>
                                                       <b-button v-if="!isNewMemberOpen"  variant="info" @click="openAddMember">Inviter un membre</b-button>
@@ -273,6 +308,7 @@ var container_table = new Vue({
        phone: '{{user.phone}}',
        phone_home: '{{user.phoneHome}}',
        email: '{{user.email}}',
+       user_id: '{{user.id}}',
        birthday: '{{ user.birthday|date("d/m/Y") }}',
        addresses: [
             {% for address in user.addresses %} 
@@ -323,11 +359,17 @@ var container_table = new Vue({
             {
                 name:'{{family.name}}',
                 id:'{{family.id}}',
+                admin:'{{family.admin.id}}',
+                father: {% if family.father %}'{{family.father.id}}'{% else %}null{% endif %},
+                mother: {% if family.mother %}'{{family.mother.id}}'{% else %}null{% endif %},
                 members:[{% for member in family.members %}{
                             image:'{{ asset("upload/user/"~ member.ImageName ) }}',
                             firstname:' {{ member.firstname }}',
                             lastname: '{{ member.lastname }}',
                             link:"{{ path('viewProfile', {email: member.email}) }}",
+                            isChild:"{{ member.isChild }}",
+                            id: "{{ member.id }}"
+
                 },
                     {% endfor %}
                 ],

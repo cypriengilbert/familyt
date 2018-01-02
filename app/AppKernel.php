@@ -23,8 +23,8 @@ class AppKernel extends Kernel
             new Vich\UploaderBundle\VichUploaderBundle(),
             new EventBundle\EventBundle(),
             new InvitationBundle\InvitationBundle(),
-            new GalleryBundle\GalleryBundle(),
             new NotifBundle\NotifBundle(),
+
         ];
 
         if (in_array($this->getEnvironment(), ['dev', 'test'], true)) {

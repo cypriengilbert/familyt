@@ -4,7 +4,7 @@ security:
         UserBundle\Entity\User: sha512
 
     role_hierarchy:
-        ROLE_ADMIN: ROLE_USER
+        ROLE_ADMIN:       ROLE_USER
         ROLE_SUPER_ADMIN: ROLE_ADMIN
 
     providers:
@@ -37,7 +37,6 @@ security:
         - { path: ^/resetting, role: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/wish/shared, role: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/admin/, role: ROLE_ADMIN }
-        - { path: ^/wish/, role: ROLE_USER,}
+        - { path: ^/wish/, role: ROLE_USER }
         - { path: ^/expenses/, role: ROLE_USER }
         - { path: ^, role: ROLE_USER }
-        

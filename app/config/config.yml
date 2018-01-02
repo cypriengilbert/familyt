@@ -7,7 +7,6 @@ imports:
     - { resource: "@AccountingBundle/Resources/config/services.yml" }
     - { resource: "@EventBundle/Resources/config/services.yml" }
     - { resource: "@InvitationBundle/Resources/config/services.yml" }
-    - { resource: "@GalleryBundle/Resources/config/services.yml" }
     - { resource: "@NotifBundle/Resources/config/services.yml" }
 
 # Put parameters here that don't need to change on each machine where the app is deployed
@@ -76,15 +75,11 @@ swiftmailer:
     password: '%mailer_password%'
     port: '%mailer_port%'
 
+
 fos_user:
     db_driver: orm # other valid values are 'mongodb', 'couchdb' and 'propel'
     firewall_name: main
     user_class: UserBundle\Entity\User
-    registration:
-        form:
-            type: UserBundle\Form\RegistrationType
-        confirmation:
-            enabled: false
     from_email:
         address: "%mailer_user%"
         sender_name: "%mailer_user%"
@@ -93,8 +88,8 @@ vich_uploader:
     db_driver: orm
     mappings:
         imageFile:
-            namer: vich_uploader.namer_uniqid
-            uri_prefix:   /upload/user/
+            namer:              vich_uploader.namer_uniqid
+            uri_prefix:         /upload/user/
             upload_destination: %kernel.root_dir%/../web/upload/user/
             inject_on_load:     false
             delete_on_update:   true

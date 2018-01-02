@@ -145,7 +145,7 @@ class DefaultController extends Controller
       array_push($members_accounting, $family_accounting->getFather() );
     $brother_families = $this->getAllChildFamily();
 
-    $repartition = json_decode($this->expensesRepartitionAction(1));
+ //   $repartition = json_decode($this->expensesRepartitionAction(1));
 
         return $this->render('AccountingBundle:Default:Account.html.twig', array("nbNotif" => $nbNotif,"brother_families" => $brother_families,'expenses' => $expenses, "user" => $this->getUser(),'family_members'=>$family_members, 'expense_table' => $expense_table, 'family_members_admin' => $members_accounting));
     }
@@ -197,6 +197,7 @@ class DefaultController extends Controller
         $user = $this->getUser();
         $family = $user->getFamilies();
         $nb_count0 = 0 ;
+        $x = 1;
         $repositoryExpense    = $this->getDoctrine()->getManager()->getRepository('AccountingBundle:Expense');
         $repositoryEvent    = $this->getDoctrine()->getManager()->getRepository('EventBundle:Event');
         $event = $repositoryEvent->findOneBy(array('id' => $event));
@@ -215,9 +216,9 @@ class DefaultController extends Controller
             foreach ($expenses[$value->getUsername()] as $expense) {
                 $contributors = $expense->getContributors();
                 $nb_contributors = count($contributors);
-                $expense_table[$expense->getAuthor()->getUsername()] -= $expense->getAmount();
+                $expense_table[$expense->getAuthor()->getUsername()] -= round($expense->getAmount(),2);
                 foreach ($contributors as $contributor) {
-                    $expense_table[$contributor->getUsername()] += ($expense->getAmount()/$nb_contributors);
+                    $expense_table[$contributor->getUsername()] += round(($expense->getAmount()/$nb_contributors),2);
                 }
             }
         }
@@ -230,12 +231,13 @@ class DefaultController extends Controller
             }
         }
         
-        while (abs(max($expense_table)) > 0) {
+        while (min($expense_table) != 0 and max($expense_table) != 0 ) {
 
            foreach ($expense_table as $key => $value) {
                 if($value < 0){
                 $key2 = array_search(-$value, $expense_table);
                 if($key2){
+
                     $expense_final = array('amount' => abs($value), 'receiver' => $key, 'sender' => $key2);
                     array_push($transaction, $expense_final);
                     $expense_table[$key] += abs($value);
@@ -244,27 +246,31 @@ class DefaultController extends Controller
              }
            } 
            $expense_max = max($expense_table);
-           $index_max = array_keys($expense_table, $expense_max);
+           $index_max = array_keys($expense_table, $expense_max); // doit 130
            $expense_min = min($expense_table);
-           $index_min = array_keys($expense_table, $expense_min);
+           $index_min = array_keys($expense_table, $expense_min); // doit recup 115
+
 
            if($index_min[0] != $index_max[0]){
-                $expense_final = array('amount' => abs($expense_max), 'receiver' => $index_min[0], 'sender' => $index_max[0]);
-                array_push($transaction, $expense_final);
-                
-                $expense_table[$index_min[0]] += $expense_max;
-                
-                if(abs($expense_min) >= abs($expense_max)){
-                $expense_table[$index_max[0]] = 0;
-                }     
-                else{
-                $expense_table[$index_max[0]] += $expense_table[$index_min[0]];
-                
-                } 
-           }
-           
-          
+                if(abs($expense_min) <= abs($expense_max)){
+                    $expense_final = array('amount' => abs($expense_min), 'receiver' => $index_min[0], 'sender' => $index_max[0]);
+                    array_push($transaction, $expense_final);
+                    $expense_table[$index_min[0]] = 0;
+                    $expense_table[$index_max[0]] += $expense_min;
 
+                  }
+                else{
+                    $expense_final = array('amount' => abs($expense_max), 'receiver' => $index_min[0], 'sender' => $index_max[0]);
+                    array_push($transaction, $expense_final);
+                    $expense_table[$index_min[0]] += $expense_max;
+                    $expense_table[$index_max[0]] = 0;
+
+                }
+
+
+                } 
+           
+                  
         }
         
 
